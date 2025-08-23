@@ -1,16 +1,9 @@
 import prisma from "../DB/db.config.js";
 
-/**
- * @desc    Create a new department
- * @route   POST /api/departments
- * @access  Private (Admin/SuperAdmin)
- */
-
 export const createDepartment = async (req, res) => {
   try {
-    const { name, shortCode, location, description, status } = req.body;
+    const { name, shortCode, location, description, timeFrom ,timeTo, status } = req.body;
 
-    // Collect validation errors
     const errors = {};
 
     if (!name) {
@@ -21,7 +14,6 @@ export const createDepartment = async (req, res) => {
       errors.shortCode = "Short Code is required";
     }
 
-    // If validation fails
     if (Object.keys(errors).length > 0) {
       return res.status(400).json({
         success: false,
@@ -59,6 +51,8 @@ export const createDepartment = async (req, res) => {
         shortCode,
         location,
         description,
+        timeFrom ,
+        timeTo,
         status: status ?? true,
       },
     });
@@ -112,39 +106,51 @@ export const getDepartment = async (req, res) => {
 
 export const deleteDepartment = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params
 
     // Check if department exists
     const department = await prisma.department.findUnique({
       where: { id: Number(id) },
-    });
+    })
 
     if (!department) {
       return res.status(404).json({
         status: 404,
-        message: "Department not found",
-      });
+        message: "Department not found.",
+      })
+    }
+
+    // Check if department has related procedures
+    const relatedProcedures = await prisma.procedure.findMany({
+      where: { departmentId: Number(id) },
+    })
+
+    if (relatedProcedures.length > 0) {
+      return res.status(400).json({
+        status: 400,
+        message:
+          "This department cannot be deleted because it has related procedures. Please delete or reassign the procedures first.",
+      })
     }
 
     // Delete department
     await prisma.department.delete({
       where: { id: Number(id) },
-    });
+    })
 
     return res.status(200).json({
       status: 200,
-      message: "Department deleted successfully",
-    });
+      message: "Department deleted successfully.",
+    })
   } catch (error) {
-    console.error("Error deleting department:", error);
-
+    console.error("Error deleting department:", error)
     return res.status(500).json({
       status: 500,
-      message: "An unexpected error occurred while deleting department",
+      message: "Internal server error.",
       error: error.message,
-    });
+    })
   }
-};
+}
 
 export const updateDepartment = async (req, res) => {
   try {
