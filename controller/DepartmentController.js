@@ -9,16 +9,29 @@ import prisma from "../DB/db.config.js";
 export const createDepartment = async (req, res) => {
   try {
     const { name, shortCode, location, description, status } = req.body;
-   
-    // Basic validation
-    if (!name || !shortCode) {
+
+    // Collect validation errors
+    const errors = {};
+
+    if (!name) {
+      errors.name = "Name is required";
+    }
+
+    if (!shortCode) {
+      errors.shortCode = "Short Code is required";
+    }
+
+    // If validation fails
+    if (Object.keys(errors).length > 0) {
       return res.status(400).json({
         success: false,
-        message: "Name and Short Code are required",
+        status: 400,
+        message: "Validation failed",
+        errors,
       });
     }
 
-    // Check if department already exists
+    // Check for duplicates
     const existing = await prisma.department.findFirst({
       where: {
         OR: [{ name }, { shortCode }],
@@ -28,7 +41,14 @@ export const createDepartment = async (req, res) => {
     if (existing) {
       return res.status(409).json({
         success: false,
+        statusCode: 409,
         message: "Department with same name or short code already exists",
+        errors: {
+          ...(existing.name === name && { name: "Name already exists" }),
+          ...(existing.shortCode === shortCode && {
+            shortCode: "Short Code already exists",
+          }),
+        },
       });
     }
 
@@ -45,6 +65,7 @@ export const createDepartment = async (req, res) => {
 
     return res.status(201).json({
       success: true,
+      statusCode: 201,
       message: "Department created successfully",
       data: department,
     });
@@ -52,12 +73,14 @@ export const createDepartment = async (req, res) => {
     console.error("Error creating department:", error);
     return res.status(500).json({
       success: false,
+      statusCode: 500,
       message: "Internal server error",
-      error: error.message,
+      errors: {
+        general: "Something went wrong. Please try again later.",
+      },
     });
   }
 };
-
 
 export const getDepartment = async (req, res) => {
   try {
@@ -170,3 +193,33 @@ export const updateDepartment = async (req, res) => {
     });
   }
 };
+
+export const getSingleDepartment = async (req, res) => {
+  try {
+    const { id } = req.params; 
+
+    const department = await prisma.department.findUnique({ 
+      where: { id: Number(id) },
+    });
+
+    if (!department) {
+      return res.status(404).json({
+        status: 404,
+        message: "Department not found",
+      });
+    }
+
+    return res.status(200).json({
+      status: 200,
+      data: department,
+      message: "Get department successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: 500,
+      message: "An unexpected error occurred while fetching department",
+      error: error.message,
+    });
+  }
+};
+
