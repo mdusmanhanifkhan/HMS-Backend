@@ -18,7 +18,7 @@ export const createDepartment = async (req, res) => {
       return res.status(400).json({
         success: false,
         status: 400,
-        message: "Validation failed",
+        message: "One or more fields are invalid. Please review the errors below and try again.",
         errors,
       });
     }
@@ -68,7 +68,7 @@ export const createDepartment = async (req, res) => {
     return res.status(500).json({
       success: false,
       statusCode: 500,
-      message: "Internal server error",
+      message: "Something went wrong while processing your request. Please try again later or reach out to our support team at support@xyzzy.com for assistance.",
       errors: {
         general: "Something went wrong. Please try again later.",
       },
