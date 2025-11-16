@@ -22,8 +22,10 @@ model Department {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  procedures  Procedure[]
-  doctorLinks DoctorDepartment[]
+  procedures         Procedure[]
+  doctorLinks        DoctorDepartment[]
+  DoctorProcedureFee DoctorProcedureFee[]
+  MedicalRecord      MedicalRecord[]
 
   @@index([name])
 }
@@ -42,7 +44,8 @@ model Procedure {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
-  feeLinks DoctorProcedureFee[]
+  feeLinks      DoctorProcedureFee[]
+  MedicalRecord MedicalRecord[]
 
   @@unique([departmentId, name])
   @@index([departmentId])
@@ -83,6 +86,7 @@ model Doctor {
 
   departmentLinks DoctorDepartment[]
   feeLinks        DoctorProcedureFee[]
+  MedicalRecord   MedicalRecord[]
 
   @@index([name])
   @@index([specialization])
@@ -130,14 +134,24 @@ model FeePolicy {
  * —— Doctor ↔ Procedure Fee Assignment ——
  */
 model DoctorProcedureFee {
-  id          Int @id @default(autoincrement())
-  doctorId    Int
-  procedureId Int
-  feePolicyId Int
+  id           Int  @id @default(autoincrement())
+  doctorId     Int
+  procedureId  Int
+  feePolicyId  Int?
+  departmentId Int? // optional reference to department
 
-  doctor    Doctor    @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-  procedure Procedure @relation(fields: [procedureId], references: [id], onDelete: Cascade)
-  feePolicy FeePolicy @relation(fields: [feePolicyId], references: [id], onDelete: Restrict)
+  paymentType String  @db.VarChar(50) // 'Share' | 'Fixed' | 'Share + Fixed'
+  description String? @db.VarChar(500)
+  status      Boolean @default(true)
+
+  // Relations
+  doctor     Doctor      @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  procedure  Procedure   @relation(fields: [procedureId], references: [id], onDelete: Cascade)
+  feePolicy  FeePolicy?  @relation(fields: [feePolicyId], references: [id], onDelete: Restrict)
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  // Procedure price
+  procedurePrice Decimal? @db.Decimal(10, 2)
 
   // Optional overrides
   overrideFixedAmount        Decimal? @db.Decimal(10, 2)
@@ -149,4 +163,105 @@ model DoctorProcedureFee {
 
   @@unique([doctorId, procedureId])
   @@index([feePolicyId])
+  @@index([departmentId])
+}
+
+model Patient {
+  id            Int             @id @default(autoincrement())
+  patientId     Int             @unique
+  name          String
+  guardianName  String
+  gender        String
+  age           Int
+  maritalStatus String
+  bloodGroup    String
+  cnicNumber    String?         @unique
+  phoneNumber   String?         @unique
+  address       String
+  createdAt     DateTime        @default(now())
+  welfareRecord WelfarePatient?
+  MedicalRecord MedicalRecord[]
+}
+
+model WelfarePatient {
+  id                 Int       @id @default(autoincrement())
+  patientId          Int       @unique
+  welfareCategory    String    @db.VarChar(100)
+  discountType       String?   @db.VarChar(50)
+  discountPercentage Float     @default(0)
+  startDate          DateTime?
+  endDate            DateTime?
+  approvedBy         String?   @db.VarChar(100)
+  referredBy         String?   @db.VarChar(100)
+  remarks            String?   @db.VarChar(500)
+
+  monthlyIncome    String? @db.VarChar(100)
+  sourceOfIncome   String? @db.VarChar(100)
+  houseOwnership   String? @db.VarChar(100)
+  houseType        String? @db.VarChar(100)
+  vehicleOwnership String? @db.VarChar(100)
+  familyMembers    Int?
+  workingMembers   Int?
+  educationLevel   String? @db.VarChar(100)
+  financialRemarks String? @db.VarChar(500)
+
+  verificationStatus String?   @db.VarChar(50)
+  verifiedBy         String?   @db.VarChar(100)
+  verificationDate   DateTime?
+  approvalDate       DateTime?
+  nextReviewDate     DateTime?
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MedicalRecord {
+  id           Int      @id @default(autoincrement())
+  patientId    Int
+  departmentId Int
+  doctorId     Int
+  procedureId  Int
+  visitDate    DateTime @default(now())
+  fee          Decimal  @db.Decimal(10, 2)
+  discount     Float    @default(0)
+  finalFee     Decimal  @db.Decimal(10, 2)
+  notes        String?  @db.VarChar(500)
+
+  // Relations
+  patient    Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor     Doctor     @relation(fields: [doctorId], references: [id], onDelete: Restrict)
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  procedure  Procedure  @relation(fields: [procedureId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+}
+
+model Role {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  // Permissions (access control)
+  canManageDepartments Boolean @default(false)
+  canManageDoctors     Boolean @default(false)
+  canManagePatients    Boolean @default(false)
+  canManageWelfare     Boolean @default(false)
+  canManageProcedures  Boolean @default(false)
+  canManageFees        Boolean @default(false)
+  canViewReports       Boolean @default(false)
+
+  users User[]
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  roleId    Int
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  status    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

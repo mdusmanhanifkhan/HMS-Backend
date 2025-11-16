@@ -69,16 +69,18 @@ export const createProcedure = async (req, res) => {
 // Get All Procedures with optional search
 export const getProcedures = async (req, res) => {
   try {
-    const { search } = req.query;
-    const where = search
-      ? {
-          OR: [
-            { name: { contains: search, mode: "insensitive" } },
-            { shortCode: { contains: search, mode: "insensitive" } },
-            { description: { contains: search, mode: "insensitive" } },
-          ],
-        }
-      : {};
+    const { search, status } = req.query;
+
+    const where = {
+      ...(status !== undefined && status !== "all" && { status: status === "true" }),
+      ...(search && {
+        OR: [
+          { name: { contains: search, mode: "insensitive" } },
+          { shortCode: { contains: search, mode: "insensitive" } },
+          { description: { contains: search, mode: "insensitive" } },
+        ],
+      }),
+    };
 
     const procedures = await prisma.procedure.findMany({
       where,
@@ -86,9 +88,23 @@ export const getProcedures = async (req, res) => {
       orderBy: { createdAt: "desc" },
     });
 
-    if (!procedures.length) return sendError(res, 404, search ? `No procedures match "${search}"` : "No procedures found");
+    if (!procedures.length) {
+      return sendError(
+        res,
+        404,
+        search
+          ? `No procedures match "${search}"`
+          : status !== undefined && status !== "all"
+          ? `No ${status === "true" ? "active" : "inactive"} procedures found`
+          : "No procedures found"
+      );
+    }
 
-    return res.status(200).json({ status: 200, message: "Procedures retrieved successfully", data: procedures });
+    return res.status(200).json({
+      status: 200,
+      message: "Procedures retrieved successfully",
+      data: procedures,
+    });
   } catch (error) {
     console.error("Error fetching procedures:", error);
     return sendError(res, 500, ERROR_MESSAGES.INTERNAL);
@@ -165,5 +181,37 @@ export const deleteProcedure = async (req, res) => {
   } catch (error) {
     console.error("Error deleting procedure:", error);
     return sendError(res, 500, ERROR_MESSAGES.INTERNAL);
+  }
+};
+
+// Search Procedure
+export const searchProcedures = async (req, res) => {
+  try {
+    const query = req.query.query?.toString().trim() || "";
+
+    // if query is empty, return all procedures
+    const where = query
+      ? { name: { contains: query, mode: "insensitive" } }
+      : {};
+
+    const procedures = await prisma.procedure.findMany({
+      where,
+      include: { department: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return res.status(200).json({
+      status: 200,
+      message: query
+        ? `Procedures matching "${query}" retrieved successfully`
+        : "All procedures retrieved successfully",
+      data: procedures,
+    });
+  } catch (error) {
+    console.error("Error searching procedures:", error);
+    return res.status(500).json({
+      status: 500,
+      message: "Internal server error",
+    });
   }
 };
