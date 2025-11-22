@@ -308,15 +308,31 @@ export const deletePatient = async (req, res) => {
   }
 };
 
-// ✅ Search patient by patientId (MR number)
-export const searchPatientByPatientId = async (req, res) => {
+// ✅ Search patients with optional filters
+export const searchPatients = async (req, res) => {
   try {
-    const patientId = Number(req.params.patientId);
-    if (isNaN(patientId))
-      return sendError(res, 400, "Invalid patient ID format (must be numeric)");
+    // Get filter query params
+    const { name, patientId, cnic, phone } = req.query;
 
-    const patient = await prisma.patient.findUnique({
-      where: { patientId },
+    // Build dynamic filter
+    const filters = { OR: [] };
+
+    if (name) {
+      filters.OR.push({ name: { contains: name, mode: 'insensitive' } });
+    }
+    if (patientId && !isNaN(Number(patientId))) {
+      filters.OR.push({ patientId: Number(patientId) });
+    }
+    if (cnic) {
+      filters.OR.push({ cnicNumber: { contains: cnic } });
+    }
+    if (phone) {
+      filters.OR.push({ phoneNumber: { contains: phone } });
+    }
+
+    // If no filters provided, fetch all patients
+    const patients = await prisma.patient.findMany({
+      where: filters.OR.length ? filters : undefined,
       include: {
         welfareRecord: {
           select: {
@@ -330,32 +346,42 @@ export const searchPatientByPatientId = async (req, res) => {
       },
     });
 
-    if (!patient)
-      return sendError(res, 404, `No patient found for ID ${patientId}`);
+    if (!patients || patients.length === 0) {
+      return res.status(200).json({
+        status: 200,
+        message: 'No patients found matching your query',
+        data: [],
+      });
+    }
 
     const today = new Date();
-    const welfare = patient.welfareRecord;
-    const isActive =
-      welfare &&
-      (!welfare.startDate || new Date(welfare.startDate) <= today) &&
-      (!welfare.endDate || new Date(welfare.endDate) >= today);
+    const results = patients.map((patient) => {
+      const welfare = patient.welfareRecord;
+      const isActive =
+        welfare &&
+        (!welfare.startDate || new Date(welfare.startDate) <= today) &&
+        (!welfare.endDate || new Date(welfare.endDate) >= today);
 
-    const result = {
-      ...patient,
-      isWelfare: !!welfare,
-      welfareCategory: welfare?.welfareCategory || null,
-      discountType: welfare?.discountType || null,
-      discountApplicable: isActive ? welfare.discountPercentage : 0,
-      discountStatus: isActive ? "Active" : welfare ? "Expired" : "None",
-    };
+      return {
+        ...patient,
+        isWelfare: !!welfare,
+        welfareCategory: welfare?.welfareCategory || null,
+        discountType: welfare?.discountType || null,
+        discountApplicable: isActive ? welfare.discountPercentage : 0,
+        discountStatus: isActive ? 'Active' : welfare ? 'Expired' : 'None',
+      };
+    });
 
     return res.status(200).json({
       status: 200,
-      message: "Patient found successfully",
-      data: result,
+      message: 'Patients found successfully',
+      data: results,
     });
   } catch (error) {
-    console.error("Error searching patient by ID:", error);
-    return sendError(res, 500, "Internal server error");
+    console.error('Error searching patients:', error);
+    return res.status(500).json({
+      status: 500,
+      message: 'Internal server error',
+    });
   }
 };
