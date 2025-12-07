@@ -13,7 +13,7 @@ import roleRoutes from "./roleRoutes.js"
 
 // ✅ Import middleware
 import { protect } from "../middleware/authMiddleware.js"
-import { superAdminOnly } from "../middleware/superAdminMiddleware.js"
+// import { superAdminOnly } from "../middleware/superAdminMiddleware.js"
 
 const router = Router()
 

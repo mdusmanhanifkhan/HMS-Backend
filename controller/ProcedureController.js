@@ -71,43 +71,68 @@ export const getProcedures = async (req, res) => {
   try {
     const { search, status } = req.query;
 
-    const where = {
-      ...(status !== undefined && status !== "all" && { status: status === "true" }),
-      ...(search && {
-        OR: [
-          { name: { contains: search, mode: "insensitive" } },
-          { shortCode: { contains: search, mode: "insensitive" } },
-          { description: { contains: search, mode: "insensitive" } },
-        ],
-      }),
-    };
+    // --------------------------
+    // 🛑 Validate Query Params
+    // --------------------------
+    if (status && !["true", "false", "all"].includes(status)) {
+      return sendError(res, 400, "Invalid status value. Use true, false, or all.");
+    }
 
+    // --------------------------
+    // 🔍 Build Prisma Filter
+    // --------------------------
+    const where = {};
+
+    if (status !== undefined && status !== "all") {
+      where.status = status === "true";
+    }
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { shortCode: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    // --------------------------
+    // 📌 Fetch Data from Prisma
+    // --------------------------
     const procedures = await prisma.procedure.findMany({
       where,
       include: { department: true },
       orderBy: { createdAt: "desc" },
     });
 
-    if (!procedures.length) {
-      return sendError(
-        res,
-        404,
-        search
-          ? `No procedures match "${search}"`
-          : status !== undefined && status !== "all"
-          ? `No ${status === "true" ? "active" : "inactive"} procedures found`
-          : "No procedures found"
-      );
-    }
-
+    // --------------------------
+    // 📌 Always Return 200 (Even Empty)
+    // --------------------------
     return res.status(200).json({
-      status: 200,
+      success: true,
       message: "Procedures retrieved successfully",
+      count: procedures.length,
       data: procedures,
     });
+
   } catch (error) {
+    // --------------------------
+    // ❗ Prisma Error Handling
+    // --------------------------
     console.error("Error fetching procedures:", error);
-    return sendError(res, 500, ERROR_MESSAGES.INTERNAL);
+
+    if (error.code === "P2023") {
+      // Prisma invalid ID / invalid filter
+      return sendError(res, 400, "Invalid query parameters.");
+    }
+
+    if (error.code === "P2002") {
+      return sendError(res, 409, "Database constraint violation.");
+    }
+
+    // --------------------------
+    // 🛑 Fallback (Unknown Error)
+    // --------------------------
+    return sendError(res, 500, "An unexpected error occurred while fetching procedures.");
   }
 };
 

@@ -5,7 +5,7 @@ import { superAdminOnly } from "../middleware/superAdminMiddleware.js";
 
 const router = express.Router();
 
-router.post("/register", protect ,createUser);
+router.post("/register" ,createUser);
 router.post("/login", loginUser);
 
 // ✅ /me route - protected
