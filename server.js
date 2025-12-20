@@ -22,7 +22,7 @@ app.use(express.urlencoded({extended:false}))
 app.use(routes)
 
 app.get("/",(req,res)=>{
-    return res.send("hello world!")
+    return res.send("Welcome to Hikari Med Online")
 })
 
 app.listen(port, ()=>(
