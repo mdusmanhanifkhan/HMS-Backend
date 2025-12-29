@@ -11,8 +11,7 @@ app.use(cors({
   origin: [
     "https://hikarimed.online",
     "https://www.hikarimed.online",
-    "http://localhost:5173",
-    "https://hms-frontend-alpha.vercel.app"  
+    "https://hikarimed.vercel.app"  
   ],
   credentials: true, 
 }))
