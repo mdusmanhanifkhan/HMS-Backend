@@ -157,13 +157,11 @@ export const createDoctor = async (req, res) => {
       include: { departmentLinks: true },
     });
 
-    return res
-      .status(201)
-      .json({
-        status: 201,
-        message: "Doctor created successfully",
-        data: doctor,
-      });
+    return res.status(201).json({
+      status: 201,
+      message: "Doctor created successfully",
+      data: doctor,
+    });
   } catch (error) {
     console.error("Error creating doctor:", error);
     return sendError(res, 500, "Internal server error");
@@ -174,6 +172,7 @@ export const createDoctor = async (req, res) => {
 export const getDoctors = async (req, res) => {
   try {
     const { search } = req.query;
+
     const where = search
       ? {
           OR: [
@@ -192,23 +191,23 @@ export const getDoctors = async (req, res) => {
       orderBy: { name: "asc" },
     });
 
-    if (!doctors.length)
-      return sendError(
-        res,
-        404,
-        search ? `No doctors match "${search}"` : "No doctors found"
-      );
-
-    return res
-      .status(200)
-      .json({
-        status: 200,
-        message: "Doctors retrieved successfully",
-        data: doctors,
-      });
+    return res.status(200).json({
+      status: 200,
+      message: doctors.length
+        ? "Doctors retrieved successfully"
+        : search
+        ? `No doctors match "${search}"`
+        : "No doctors found",
+      data: doctors,
+      total: doctors.length,
+    });
   } catch (error) {
     console.error("Error fetching doctors:", error);
-    return sendError(res, 500, "Internal server error");
+    return res.status(500).json({
+      status: 500,
+      message: "Internal server error",
+      data: [],
+    });
   }
 };
 
@@ -216,6 +215,7 @@ export const getDoctors = async (req, res) => {
 export const getDoctorById = async (req, res) => {
   try {
     const id = Number(req.params.id);
+
     if (isNaN(id)) return sendError(res, 400, "Invalid doctor ID");
 
     const doctor = await prisma.doctor.findUnique({
@@ -227,13 +227,11 @@ export const getDoctorById = async (req, res) => {
     });
     if (!doctor) return sendError(res, 404, "Doctor not found");
 
-    return res
-      .status(200)
-      .json({
-        status: 200,
-        message: "Doctor retrieved successfully",
-        data: doctor,
-      });
+    return res.status(200).json({
+      status: 200,
+      message: "Doctor retrieved successfully",
+      data: doctor,
+    });
   } catch (error) {
     console.error("Error fetching doctor:", error);
     return sendError(res, 500, "Internal server error");
@@ -310,13 +308,11 @@ export const updateDoctor = async (req, res) => {
       include: { departmentLinks: true },
     });
 
-    return res
-      .status(200)
-      .json({
-        status: 200,
-        message: "Doctor updated successfully",
-        data: updatedDoctor,
-      });
+    return res.status(200).json({
+      status: 200,
+      message: "Doctor updated successfully",
+      data: updatedDoctor,
+    });
   } catch (error) {
     console.error("Error updating doctor:", error);
     return sendError(res, 500, "Internal server error");
