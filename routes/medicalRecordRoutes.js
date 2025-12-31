@@ -1,12 +1,12 @@
-// import express from 'express'
-// import {
-//   createMedicalRecord,
-//   getMedicalRecordsByPatient,
-// } from '../controller/MedicalRecordController.js'
+import express from 'express'
+import {
+  createMedicalRecord,
+  getMedicalRecordsByPatient,
+} from '../controller/MedicalRecordController.js'
 
-// const router = express.Router()
+const router = express.Router()
 
-// router.post('/medical-records', createMedicalRecord)
-// router.get('/:patientId', getMedicalRecordsByPatient)
+router.post('/medical-records', createMedicalRecord)
+router.get('/:patientId', getMedicalRecordsByPatient)
 
-// export default router
+export default router
