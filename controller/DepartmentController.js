@@ -74,7 +74,6 @@ export const createDepartment = async (req, res) => {
 
     return res.status(201).json({ status: 201, message: "Department created successfully", data: department });
   } catch (error) {
-    console.error("Error creating department:", error);
     return sendError(res, 500, ERROR_MESSAGES.INTERNAL);
   }
 };
@@ -117,7 +116,6 @@ export const getDepartments = async (req, res) => {
       data: departments,
     });
   } catch (error) {
-    console.error("Error fetching departments:", error);
     return sendError(res, 500, ERROR_MESSAGES.INTERNAL);
   }
 };
@@ -134,7 +132,6 @@ export const getSingleDepartment = async (req, res) => {
 
     return res.status(200).json({ status: 200, message: "Department retrieved successfully", data: department });
   } catch (error) {
-    console.error("Error fetching department:", error);
     return sendError(res, 500, ERROR_MESSAGES.INTERNAL);
   }
 };

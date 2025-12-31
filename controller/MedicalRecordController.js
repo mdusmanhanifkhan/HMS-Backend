@@ -1,4 +1,4 @@
-import prisma from '../prismaClient.js'
+import prisma from "../DB/db.config.js";
 
 // ✅ Add new medical record
 export const createMedicalRecord = async (req, res) => {
@@ -13,7 +13,7 @@ export const createMedicalRecord = async (req, res) => {
       finalFee,
       notes,
     } = req.body
-
+    
     const record = await prisma.medicalRecord.create({
       data: {
         patientId,
@@ -29,7 +29,6 @@ export const createMedicalRecord = async (req, res) => {
 
     res.json({ success: true, data: record })
   } catch (error) {
-    console.error('Error creating record:', error)
     res.status(500).json({ success: false, message: 'Server error' })
   }
 }
@@ -51,7 +50,6 @@ export const getMedicalRecordsByPatient = async (req, res) => {
 
     res.json({ success: true, data: records })
   } catch (error) {
-    console.error('Error fetching records:', error)
     res.status(500).json({ success: false, message: 'Server error' })
   }
 }

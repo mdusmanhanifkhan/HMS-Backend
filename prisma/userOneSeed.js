@@ -22,7 +22,6 @@ async function main() {
       },
     });
 
-    console.log("Role 'patientManager' created");
   }
 
   // 2️⃣ Check if user1 exists
@@ -42,15 +41,11 @@ async function main() {
       },
     });
 
-    console.log("User1 created with patientManager role");
-  } else {
-    console.log("User1 already exists");
-  }
+  } 
 }
 
 main()
   .then(() => process.exit(0))
   .catch((e) => {
-    console.error(e);
     process.exit(1);
   });

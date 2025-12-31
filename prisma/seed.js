@@ -32,7 +32,6 @@ async function main() {
         roleId: adminRole.id,
       },
     });
-    console.log("Super Admin user created");
   }
 
   // --- User1 ---
@@ -64,13 +63,11 @@ async function main() {
         roleId: patientRole.id,
       },
     });
-    console.log("User1 created with patientManager role");
   }
 }
 
 main()
   .then(() => process.exit(0))
   .catch((e) => {
-    console.error(e);
     process.exit(1);
   });

@@ -182,7 +182,7 @@ model Patient {
   address       String
   createdAt     DateTime        @default(now())
   welfareRecord WelfarePatient?
-  MedicalRecord MedicalRecord[]
+  MedicalRecord MedicalRecord[] 
 }
 
 model WelfarePatient {
@@ -232,7 +232,7 @@ model MedicalRecord {
   notes        String?  @db.VarChar(500)
 
   // Relations
-  patient    Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  patient    Patient    @relation(fields: [patientId], references: [patientId], onDelete: Cascade)
   doctor     Doctor     @relation(fields: [doctorId], references: [id], onDelete: Restrict)
   department Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
   procedure  Procedure  @relation(fields: [procedureId], references: [id], onDelete: Restrict)

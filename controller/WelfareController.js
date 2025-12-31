@@ -72,7 +72,6 @@ export const createWelfarePatient = async (req, res) => {
 
     res.status(201).json({ status: 201, message: 'Welfare record created', data: welfare })
   } catch (error) {
-    console.error('Error creating welfare record:', error)
     sendError(res, 500, 'Server error')
   }
 }
@@ -88,7 +87,6 @@ export const getWelfarePatients = async (req, res) => {
     })
     res.json({ status: 200, data: records })
   } catch (error) {
-    console.error('Error fetching welfare patients:', error)
     sendError(res, 500, 'Server error')
   }
 }
@@ -109,7 +107,6 @@ export const getWelfareByPatientId = async (req, res) => {
     if (!record) return sendError(res, 404, 'Welfare record not found')
     res.json({ status: 200, data: record })
   } catch (error) {
-    console.error('Error fetching welfare record:', error)
     sendError(res, 500, 'Server error')
   }
 }
@@ -145,7 +142,6 @@ export const updateWelfarePatient = async (req, res) => {
 
     res.json({ status: 200, message: 'Welfare record updated', data: updated })
   } catch (error) {
-    console.error('Error updating welfare record:', error)
     sendError(res, 500, 'Server error')
   }
 }
@@ -164,7 +160,6 @@ export const deleteWelfarePatient = async (req, res) => {
     await prisma.welfarePatient.delete({ where: { patientId } })
     res.json({ status: 200, message: 'Welfare record deleted' })
   } catch (error) {
-    console.error('Error deleting welfare record:', error)
     sendError(res, 500, 'Server error')
   }
 }

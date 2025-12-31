@@ -207,7 +207,6 @@ export const getPatientById = async (req, res) => {
       include: { welfareRecord: true },
     });
 
-    console.log(patient)
     if (!patient) return sendError(res, 404, "Patient not found");
 
     const today = new Date();
