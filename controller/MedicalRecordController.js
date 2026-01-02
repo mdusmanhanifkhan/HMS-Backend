@@ -17,7 +17,7 @@ export const createMedicalRecord = async (req, res) => {
     const createdByUserId = req.user?.id;
 
     if (!createdByUserId) {
-      return res.status(401).json({ success: false, message: 'Unauthorized' });
+      return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
     const record = await prisma.medicalRecords.create({
@@ -30,7 +30,7 @@ export const createMedicalRecord = async (req, res) => {
         discount,
         finalFee,
         notes,
-        createdBy: { connect: { id: createdByUserId } }, // relation
+        createdBy: { connect: { id: createdByUserId } },
       },
       include: {
         patient: true,
@@ -68,13 +68,13 @@ export const getMedicalRecordsByPatient = async (req, res) => {
           },
         },
       },
-      orderBy: { visitDate: 'desc' },
+      orderBy: { visitDate: "desc" },
     });
 
     if (!records.length) {
       return res.status(404).json({
         success: false,
-        message: 'No records found for this patient',
+        message: "No records found for this patient",
       });
     }
 
@@ -87,6 +87,6 @@ export const getMedicalRecordsByPatient = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
