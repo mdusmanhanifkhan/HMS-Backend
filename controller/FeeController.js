@@ -118,11 +118,6 @@ export const getDoctorFees = async (req, res) => {
   }
 }
 
-<<<<<<< HEAD
-=======
-
-
->>>>>>> 8daaba6 (make some changes)
 /**
  * PUT /api/doctor-fees/:id
  */
@@ -241,10 +236,6 @@ export const deleteDoctorFee = async (req, res) => {
   }
 }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 8daaba6 (make some changes)
 /**
  * GET /api/doctor-fees/:id
  * Fetch single doctor fee
@@ -293,7 +284,3 @@ export const getSingleDoctorFee = async (req, res) => {
     })
   }
 }
-<<<<<<< HEAD
-=======
-
->>>>>>> 8daaba6 (make some changes)

@@ -10,7 +10,7 @@
     "server": "nodemon server.js"
   },
   "prisma": {
-    "seed": "node prisma/seed.js && node prisma/user1.js"
+     "seed": "node prisma/seed.js"
   },
   "keywords": [],
   "author": "",

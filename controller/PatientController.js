@@ -84,20 +84,7 @@ export const createPatient = async (req, res) => {
         errors
       );
 
-    // Check duplicates
-    const existing = await prisma.patient.findFirst({
-      where: { OR: [{ cnicNumber }, { phoneNumber }] },
-    });
-    if (existing) {
-      const dupErrors = {};
-      if (existing.cnicNumber === cnicNumber)
-        dupErrors.cnicNumber = "CNIC already exists";
-      if (existing.phoneNumber === phoneNumber)
-        dupErrors.phoneNumber = "Phone number already exists";
-      return sendError(res, 409, "Duplicate patient", dupErrors);
-    }
-
-    // ✅ Generate custom numeric MR number
+    // Generate custom numeric MR number
     const patientId = await generateSequentialPatientId();
 
     // Create patient
@@ -122,7 +109,6 @@ export const createPatient = async (req, res) => {
       data: patient,
     });
   } catch (error) {
-    console.error("Error creating patient:", error);
     return sendError(res, 500, "Internal server error");
   }
 };
