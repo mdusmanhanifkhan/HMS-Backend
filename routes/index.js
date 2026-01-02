@@ -28,12 +28,12 @@ router.use("/api", roleRoutes)
 // -----------------------------
 // 🏥 Protected Routes (require login)
 // -----------------------------
-router.use("/api", protect, departmentRoutes)
-router.use("/api", protect, procedureRoutes)
-router.use("/api", protect, doctorRoutes)
-router.use("/api", protect, patientRoutes)
-router.use("/api", protect, welfareRoutes)
-router.use("/api", protect, feeRoutes)
+router.use("/api", protect,  departmentRoutes)
+router.use("/api", protect,  procedureRoutes)
+router.use("/api", protect,  doctorRoutes)
+router.use("/api", protect,  patientRoutes)
+router.use("/api", protect,  welfareRoutes)
+router.use("/api", protect,  feeRoutes)
 
 // Example future:
 router.use("/api", protect, medicalRecordsRoutes)

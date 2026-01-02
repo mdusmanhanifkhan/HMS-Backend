@@ -6,12 +6,16 @@ import cors from "cors"
 const app = express()
 
 const port = process.env.PORT;
+const FRONTEND_SERVICE_ORIGIN = process.env.CORE_ORIGIN_FRONTEND; 
+const APP_BASE_URL = process.env.APP_BASE_URL;
+const APP_BASE_URL_WWW = process.env.APP_BASE_URL_WWW;
 
 app.use(cors({
   origin: [
     "https://hikarimed.online",
     "https://www.hikarimed.online",
-    "https://hikarimed.vercel.app"  
+    "https://hikarimed.vercel.app",
+    "http://localhost:5173"
   ],
   credentials: true, 
 }))

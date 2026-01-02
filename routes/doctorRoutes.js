@@ -1,5 +1,9 @@
 import {Router} from "express";
+<<<<<<< HEAD
 import { createDoctor, deleteDoctor, getDoctorById, getDoctors, updateDoctor } from "../controller/DoctorController.js";
+=======
+import { createDoctor, getDoctors , getDoctorById , updateDoctor , deleteDoctor } from "../controller/DoctorController.js";
+>>>>>>> 8daaba6 (make some changes)
 
 const router = Router()
 

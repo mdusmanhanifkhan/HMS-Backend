@@ -34,7 +34,8 @@ async function main() {
     });
   }
 
-  // --- User1 ---
+  // ---Reception Management---
+  
   let patientRole = await prisma.role.findUnique({ where: { name: "patientManager" } });
   if (!patientRole) {
     patientRole = await prisma.role.create({
@@ -52,18 +53,22 @@ async function main() {
     });
   }
 
-  const user1 = await prisma.user.findUnique({ where: { email: "user1@system.com" } });
-  if (!user1) {
-    const hashedPassword = await bcrypt.hash("user1234", 10);
+  const reception = await prisma.user.findUnique({ where: { email: "reception@system.com" } });
+  if (!reception) {
+    const hashedPassword = await bcrypt.hash("Hikarimed@01", 10);
     await prisma.user.create({
       data: {
-        name: "User One",
-        email: "user1@system.com",
+        name: "Reception",
+        email: "reception@system.com",
         password: hashedPassword,
         roleId: patientRole.id,
       },
     });
+<<<<<<< HEAD
   }
+=======
+    }
+>>>>>>> 8daaba6 (make some changes)
 }
 
 main()

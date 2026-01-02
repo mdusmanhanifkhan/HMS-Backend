@@ -171,6 +171,7 @@ export const createDoctor = async (req, res) => {
 };
 
 // Get all doctors with optional search
+// Get all doctors with optional search
 export const getDoctors = async (req, res) => {
   try {
     const { search } = req.query;
