@@ -1,6 +1,6 @@
 import prisma from "../DB/db.config.js";
 
-// ✅ Add new medical history
+// ✅ Add new medical history record
 export const createMedicalHistory = async (req, res) => {
   try {
     const {
@@ -15,10 +15,7 @@ export const createMedicalHistory = async (req, res) => {
     } = req.body;
 
     const createdByUserId = req.user?.id;
-
-    if (!createdByUserId) {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
-    }
+    if (!createdByUserId) return res.status(401).json({ success: false, message: "Unauthorized" });
 
     const record = await prisma.medicalHistory.create({
       data: {
@@ -30,7 +27,7 @@ export const createMedicalHistory = async (req, res) => {
         discount,
         finalFee,
         notes,
-        createdBy: { connect: { id: createdByUserId } }, // relation to user
+        createdBy: { connect: { id: createdByUserId } },
       },
       include: {
         patient: true,
@@ -52,7 +49,6 @@ export const createMedicalHistory = async (req, res) => {
 export const getMedicalHistoryByPatient = async (req, res) => {
   try {
     const { patientId } = req.params;
-
     const records = await prisma.medicalHistory.findMany({
       where: { patientId: Number(patientId) },
       include: {
@@ -60,31 +56,14 @@ export const getMedicalHistoryByPatient = async (req, res) => {
         doctor: true,
         department: true,
         procedure: true,
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
+        createdBy: { select: { id: true, name: true, email: true } },
       },
       orderBy: { visitDate: "desc" },
     });
 
-    if (!records.length) {
-      return res.status(404).json({
-        success: false,
-        message: "No history found for this patient",
-      });
-    }
+    if (!records.length) return res.status(404).json({ success: false, message: "No medical history found for this patient" });
 
-    res.json({
-      success: true,
-      data: {
-        patient: records[0].patient,
-        records,
-      },
-    });
+    res.json({ success: true, data: { patient: records[0].patient, records } });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Server error" });

@@ -220,7 +220,6 @@ model MedicalHistory {
   createdAt       DateTime   @default(now())
   createdByUserId Int?
 
-  // Relations
   createdBy       User?      @relation(fields: [createdByUserId], references: [id], name: "MedicalHistoryCreatedBy")
   department      Department @relation(fields: [departmentId], references: [id], name: "MedicalHistoryDepartment")
   doctor          Doctor     @relation(fields: [doctorId], references: [id], name: "MedicalHistoryDoctor")
@@ -257,6 +256,5 @@ model User {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
-  // Backrelation for MedicalHistory
   medicalHistoryCreated MedicalHistory[] @relation("MedicalHistoryCreatedBy")
 }
