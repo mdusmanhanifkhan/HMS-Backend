@@ -1,7 +1,7 @@
 import prisma from "../DB/db.config.js";
 
-// ✅ Add new medical record
-export const createMedicalRecord = async (req, res) => {
+// ✅ Add new medical history
+export const createMedicalHistory = async (req, res) => {
   try {
     const {
       patientId,
@@ -20,7 +20,7 @@ export const createMedicalRecord = async (req, res) => {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
-    const record = await prisma.medicalRecords.create({
+    const record = await prisma.medicalHistory.create({
       data: {
         patientId,
         departmentId,
@@ -30,7 +30,7 @@ export const createMedicalRecord = async (req, res) => {
         discount,
         finalFee,
         notes,
-        createdBy: { connect: { id: createdByUserId } },
+        createdBy: { connect: { id: createdByUserId } }, // relation to user
       },
       include: {
         patient: true,
@@ -48,12 +48,12 @@ export const createMedicalRecord = async (req, res) => {
   }
 };
 
-// ✅ Get all medical records for a patient
-export const getMedicalRecordsByPatient = async (req, res) => {
+// ✅ Get all medical history records for a patient
+export const getMedicalHistoryByPatient = async (req, res) => {
   try {
     const { patientId } = req.params;
 
-    const records = await prisma.medicalRecords.findMany({
+    const records = await prisma.medicalHistory.findMany({
       where: { patientId: Number(patientId) },
       include: {
         patient: true,
@@ -74,7 +74,7 @@ export const getMedicalRecordsByPatient = async (req, res) => {
     if (!records.length) {
       return res.status(404).json({
         success: false,
-        message: "No records found for this patient",
+        message: "No history found for this patient",
       });
     }
 

@@ -24,7 +24,7 @@ model Department {
   procedures         Procedure[]
   doctorLinks        DoctorDepartment[]
   DoctorProcedureFee DoctorProcedureFee[]
-  medicalRecords     MedicalRecords[] @relation("MedicalRecordsDepartment")
+  medicalHistory     MedicalHistory[] @relation("MedicalHistoryDepartment")
 
   @@index([name])
 }
@@ -42,7 +42,7 @@ model Procedure {
   updatedAt    DateTime   @updatedAt
 
   feeLinks        DoctorProcedureFee[]
-  medicalRecords  MedicalRecords[] @relation("MedicalRecordsProcedure")
+  medicalHistory  MedicalHistory[] @relation("MedicalHistoryProcedure")
 
   @@unique([departmentId, name])
   @@index([departmentId])
@@ -81,7 +81,7 @@ model Doctor {
 
   departmentLinks DoctorDepartment[]
   feeLinks        DoctorProcedureFee[]
-  medicalRecords  MedicalRecords[] @relation("MedicalRecordsDoctor")
+  medicalHistory  MedicalHistory[] @relation("MedicalHistoryDoctor")
 
   @@index([name])
   @@index([specialization])
@@ -129,20 +129,16 @@ model DoctorProcedureFee {
   feePolicyId  Int?
   departmentId Int? // optional reference to department
 
-  paymentType String  @db.VarChar(50) // 'Share' | 'Fixed' | 'Share + Fixed'
+  paymentType String  @db.VarChar(50)
   description String? @db.VarChar(500)
   status      Boolean @default(true)
 
-  // Relations
   doctor     Doctor      @relation(fields: [doctorId], references: [id], onDelete: Cascade)
   procedure  Procedure   @relation(fields: [procedureId], references: [id], onDelete: Cascade)
   feePolicy  FeePolicy?  @relation(fields: [feePolicyId], references: [id], onDelete: Restrict)
   department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
 
-  // Procedure price
   procedurePrice Decimal? @db.Decimal(10, 2)
-
-  // Optional overrides
   overrideFixedAmount        Decimal? @db.Decimal(10, 2)
   overrideDoctorPercentage   Decimal? @db.Decimal(5, 2)
   overrideHospitalPercentage Decimal? @db.Decimal(5, 2)
@@ -171,7 +167,7 @@ model Patient {
   createdAt     DateTime        @default(now())
 
   welfareRecord WelfarePatient?
-  medicalRecords MedicalRecords[] @relation("MedicalRecordsPatient")
+  medicalHistory MedicalHistory[] @relation("MedicalHistoryPatient")
 }
 
 /** ───────── Welfare Patient ───────── */
@@ -209,8 +205,8 @@ model WelfarePatient {
   updatedAt DateTime @updatedAt
 }
 
-/** ───────── Medical Records ───────── */
-model MedicalRecords {
+/** ───────── Medical History ───────── */
+model MedicalHistory {
   id              Int        @id @default(autoincrement())
   patientId       Int
   departmentId    Int
@@ -225,11 +221,11 @@ model MedicalRecords {
   createdByUserId Int?
 
   // Relations
-  createdBy       User?      @relation(fields: [createdByUserId], references: [id], name: "MedicalRecordsCreatedBy")
-  department      Department @relation(fields: [departmentId], references: [id], name: "MedicalRecordsDepartment")
-  doctor          Doctor     @relation(fields: [doctorId], references: [id], name: "MedicalRecordsDoctor")
-  patient         Patient    @relation(fields: [patientId], references: [patientId], onDelete: Cascade, name: "MedicalRecordsPatient")
-  procedure       Procedure  @relation(fields: [procedureId], references: [id], name: "MedicalRecordsProcedure")
+  createdBy       User?      @relation(fields: [createdByUserId], references: [id], name: "MedicalHistoryCreatedBy")
+  department      Department @relation(fields: [departmentId], references: [id], name: "MedicalHistoryDepartment")
+  doctor          Doctor     @relation(fields: [doctorId], references: [id], name: "MedicalHistoryDoctor")
+  patient         Patient    @relation(fields: [patientId], references: [patientId], onDelete: Cascade, name: "MedicalHistoryPatient")
+  procedure       Procedure  @relation(fields: [procedureId], references: [id], name: "MedicalHistoryProcedure")
 }
 
 /** ───────── Roles ───────── */
@@ -261,6 +257,6 @@ model User {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
-  // Backrelation for MedicalRecords
-  medicalRecordsCreated MedicalRecords[] @relation("MedicalRecordsCreatedBy")
+  // Backrelation for MedicalHistory
+  medicalHistoryCreated MedicalHistory[] @relation("MedicalHistoryCreatedBy")
 }
