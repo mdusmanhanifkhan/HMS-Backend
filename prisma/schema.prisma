@@ -225,9 +225,6 @@ model MedicalRecord {
   doctorId     Int
   procedureId  Int
 
-  createdByUserId Int?
-  createdBy       User? @relation(fields: [createdByUserId], references: [id])
-
   visitDate DateTime @default(now())
   fee       Decimal  @db.Decimal(10, 2)
   discount  Float    @default(0)
@@ -269,5 +266,4 @@ model User {
   status         Boolean         @default(true)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
-  medicalRecords MedicalRecord[]
 }

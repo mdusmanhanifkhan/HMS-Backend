@@ -1,6 +1,6 @@
 import prisma from "../DB/db.config.js";
 
-// ✅ Add new medical record
+// ✅ Add new medical record (no user tracking)
 export const createMedicalRecord = async (req, res) => {
   try {
     const {
@@ -14,12 +14,6 @@ export const createMedicalRecord = async (req, res) => {
       notes,
     } = req.body;
 
-    const createdByUserId = req.user?.id;
-
-    if (!createdByUserId) {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
-    }
-
     const record = await prisma.medicalRecord.create({
       data: {
         patientId: Number(patientId),
@@ -30,14 +24,12 @@ export const createMedicalRecord = async (req, res) => {
         discount: Number(discount) || 0,
         finalFee: Number(finalFee),
         notes: notes || null,
-        createdByUserId, // this is the foreign key field in schema
       },
       include: {
         patient: true,
         doctor: true,
         department: true,
         procedure: true,
-        createdBy: { select: { id: true, name: true, email: true } },
       },
     });
 
@@ -60,13 +52,14 @@ export const getMedicalRecordsByPatient = async (req, res) => {
         doctor: true,
         department: true,
         procedure: true,
-        createdBy: { select: { id: true, name: true, email: true } },
       },
       orderBy: { visitDate: "desc" },
     });
 
     if (!records.length) {
-      return res.status(404).json({ success: false, message: "No medical records found for this patient" });
+      return res
+        .status(404)
+        .json({ success: false, message: "No medical records found for this patient" });
     }
 
     res.json({ success: true, data: { patient: records[0].patient, records } });
