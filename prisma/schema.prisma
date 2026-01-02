@@ -8,9 +8,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/**
- * —— Departments ——
- */
+/** ───────── Departments ───────── */
 model Department {
   id          Int      @id @default(autoincrement())
   name        String   @unique @db.VarChar(100)
@@ -26,14 +24,12 @@ model Department {
   procedures         Procedure[]
   doctorLinks        DoctorDepartment[]
   DoctorProcedureFee DoctorProcedureFee[]
-  MedicalRecord      MedicalRecord[]
+  medicalRecords     MedicalRecords[] @relation("MedicalRecordsDepartment")
 
   @@index([name])
 }
 
-/**
- * —— Procedures ——
- */
+/** ───────── Procedures ───────── */
 model Procedure {
   id           Int        @id @default(autoincrement())
   status       Boolean    @default(true)
@@ -45,17 +41,15 @@ model Procedure {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
-  feeLinks      DoctorProcedureFee[]
-  MedicalRecord MedicalRecord[]
+  feeLinks        DoctorProcedureFee[]
+  medicalRecords  MedicalRecords[] @relation("MedicalRecordsProcedure")
 
   @@unique([departmentId, name])
   @@index([departmentId])
   @@index([name])
 }
 
-/**
- * —— Doctor ——
- */
+/** ───────── Doctor ───────── */
 model Doctor {
   id     Int     @id @default(autoincrement())
   status Boolean @default(true)
@@ -87,15 +81,13 @@ model Doctor {
 
   departmentLinks DoctorDepartment[]
   feeLinks        DoctorProcedureFee[]
-  MedicalRecord   MedicalRecord[]
+  medicalRecords  MedicalRecords[] @relation("MedicalRecordsDoctor")
 
   @@index([name])
   @@index([specialization])
 }
 
-/**
- * —— Doctor ↔ Department ——
- */
+/** ───────── Doctor ↔ Department ───────── */
 model DoctorDepartment {
   id           Int @id @default(autoincrement())
   doctorId     Int
@@ -110,9 +102,7 @@ model DoctorDepartment {
   @@index([departmentId])
 }
 
-/**
- * —— Fee Policies ——
- */
+/** ───────── Fee Policies ───────── */
 model FeePolicy {
   id   Int     @id @default(autoincrement())
   name String  @unique @db.VarChar(100)
@@ -131,9 +121,7 @@ model FeePolicy {
   feeLinks DoctorProcedureFee[]
 }
 
-/**
- * —— Doctor ↔ Procedure Fee Assignment ——
- */
+/** ───────── Doctor ↔ Procedure Fee Assignment ───────── */
 model DoctorProcedureFee {
   id           Int  @id @default(autoincrement())
   doctorId     Int
@@ -167,6 +155,7 @@ model DoctorProcedureFee {
   @@index([departmentId])
 }
 
+/** ───────── Patient ───────── */
 model Patient {
   id            Int             @id @default(autoincrement())
   patientId     Int             @unique
@@ -180,10 +169,12 @@ model Patient {
   phoneNumber   String
   address       String
   createdAt     DateTime        @default(now())
+
   welfareRecord WelfarePatient?
-  MedicalRecord MedicalRecord[]
+  medicalRecords MedicalRecords[] @relation("MedicalRecordsPatient")
 }
 
+/** ───────── Welfare Patient ───────── */
 model WelfarePatient {
   id                 Int       @id @default(autoincrement())
   patientId          Int       @unique
@@ -218,35 +209,34 @@ model WelfarePatient {
   updatedAt DateTime @updatedAt
 }
 
-model MedicalRecord {
-  id           Int @id @default(autoincrement())
-  patientId    Int
-  departmentId Int
-  doctorId     Int
-  procedureId  Int
-
+/** ───────── Medical Records ───────── */
+model MedicalRecords {
+  id              Int        @id @default(autoincrement())
+  patientId       Int
+  departmentId    Int
+  doctorId        Int
+  procedureId     Int
+  visitDate       DateTime   @default(now())
+  fee             Decimal    @db.Decimal(10, 2)
+  discount        Float      @default(0)
+  finalFee        Decimal    @db.Decimal(10, 2)
+  notes           String?    @db.VarChar(500)
+  createdAt       DateTime   @default(now())
   createdByUserId Int?
-  createdBy       User? @relation(fields: [createdByUserId], references: [id])
 
-  visitDate DateTime @default(now())
-  fee       Decimal  @db.Decimal(10, 2)
-  discount  Float    @default(0)
-  finalFee  Decimal  @db.Decimal(10, 2)
-  notes     String?  @db.VarChar(500)
-
-  patient    Patient    @relation(fields: [patientId], references: [patientId], onDelete: Cascade)
-  doctor     Doctor     @relation(fields: [doctorId], references: [id], onDelete: Restrict)
-  department Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
-  procedure  Procedure  @relation(fields: [procedureId], references: [id], onDelete: Restrict)
-
-  createdAt DateTime @default(now())
+  // Relations
+  createdBy       User?      @relation(fields: [createdByUserId], references: [id], name: "MedicalRecordsCreatedBy")
+  department      Department @relation(fields: [departmentId], references: [id], name: "MedicalRecordsDepartment")
+  doctor          Doctor     @relation(fields: [doctorId], references: [id], name: "MedicalRecordsDoctor")
+  patient         Patient    @relation(fields: [patientId], references: [patientId], onDelete: Cascade, name: "MedicalRecordsPatient")
+  procedure       Procedure  @relation(fields: [procedureId], references: [id], name: "MedicalRecordsProcedure")
 }
 
+/** ───────── Roles ───────── */
 model Role {
   id                       Int     @id @default(autoincrement())
   name                     String  @unique
   description              String?
-  // Permissions (access control)
   canManageDepartments     Boolean @default(false)
   canManageDoctors         Boolean @default(false)
   canManagePatients        Boolean @default(false)
@@ -259,6 +249,7 @@ model Role {
   users User[]
 }
 
+/** ───────── Users ───────── */
 model User {
   id             Int             @id @default(autoincrement())
   name           String
@@ -269,5 +260,7 @@ model User {
   status         Boolean         @default(true)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
-  medicalRecords MedicalRecord[]
+
+  // Backrelation for MedicalRecords
+  medicalRecordsCreated MedicalRecords[] @relation("MedicalRecordsCreatedBy")
 }

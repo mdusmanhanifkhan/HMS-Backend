@@ -12,15 +12,15 @@ export const createMedicalRecord = async (req, res) => {
       discount,
       finalFee,
       notes,
-    } = req.body
+    } = req.body;
 
-    const createdByUserId = req.user?.id
+    const createdByUserId = req.user?.id;
 
     if (!createdByUserId) {
-      return res.status(401).json({ success: false, message: 'Unauthorized' })
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
-    const record = await prisma.medicalRecord.create({
+    const record = await prisma.medicalRecords.create({
       data: {
         patientId,
         departmentId,
@@ -30,7 +30,7 @@ export const createMedicalRecord = async (req, res) => {
         discount,
         finalFee,
         notes,
-        createdByUserId, 
+        createdBy: { connect: { id: createdByUserId } }, // relation
       },
       include: {
         patient: true,
@@ -39,27 +39,28 @@ export const createMedicalRecord = async (req, res) => {
         procedure: true,
         createdBy: true,
       },
-    })
+    });
 
-    res.json({ success: true, data: record })
+    res.json({ success: true, data: record });
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ success: false, message: 'Server error' })
+    console.error(error);
+    res.status(500).json({ success: false, message: error.message || error });
   }
-}
+};
 
+// ✅ Get all medical records for a patient
 export const getMedicalRecordsByPatient = async (req, res) => {
   try {
-    const { patientId } = req.params
+    const { patientId } = req.params;
 
-    const records = await prisma.medicalRecord.findMany({
+    const records = await prisma.medicalRecords.findMany({
       where: { patientId: Number(patientId) },
       include: {
-        patient: true,   
+        patient: true,
         doctor: true,
         department: true,
         procedure: true,
-        createdBy: {        
+        createdBy: {
           select: {
             id: true,
             name: true,
@@ -68,24 +69,24 @@ export const getMedicalRecordsByPatient = async (req, res) => {
         },
       },
       orderBy: { visitDate: 'desc' },
-    })
+    });
 
     if (!records.length) {
       return res.status(404).json({
         success: false,
         message: 'No records found for this patient',
-      })
+      });
     }
 
     res.json({
       success: true,
       data: {
-        patient: records[0].patient, 
+        patient: records[0].patient,
         records,
       },
-    })
+    });
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ success: false, message: 'Server error' })
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
-}
+};
