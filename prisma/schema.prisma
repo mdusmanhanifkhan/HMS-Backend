@@ -182,6 +182,8 @@ model Patient {
   createdAt     DateTime        @default(now())
   welfareRecord WelfarePatient?
   MedicalRecord MedicalRecord[]
+  createdByUserId Int?
+  createdBy       User?   @relation("PatientCreatedBy", fields: [createdByUserId], references: [id])
 }
 
 model WelfarePatient {
@@ -212,7 +214,7 @@ model WelfarePatient {
   approvalDate       DateTime?
   nextReviewDate     DateTime?
 
-  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  patient Patient @relation(fields: [patientId], references: [patientId], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -266,4 +268,6 @@ model User {
   status         Boolean         @default(true)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+
+  createdPatients Patient[] @relation("PatientCreatedBy")
 }

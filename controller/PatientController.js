@@ -71,6 +71,7 @@ export const createPatient = async (req, res) => {
       phoneNumber,
       cnicNumber,
       address,
+      createdByUserId
     } = req.body;
 
     const { errors, missingFields } = validatePatientInput(req.body);
@@ -100,6 +101,7 @@ export const createPatient = async (req, res) => {
         phoneNumber,
         cnicNumber,
         address,
+        createdByUserId
       },
     });
 

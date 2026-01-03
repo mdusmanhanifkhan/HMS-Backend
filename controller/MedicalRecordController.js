@@ -1,10 +1,9 @@
 import prisma from "../DB/db.config.js";
 
-// ✅ Add new medical record (maps hospital number to internal ID)
 export const createMedicalRecord = async (req, res) => {
   try {
     const {
-      patientId,       // hospital number
+      patientId,
       departmentId,
       doctorId,
       procedureId,
@@ -14,9 +13,8 @@ export const createMedicalRecord = async (req, res) => {
       notes,
     } = req.body;
 
-    // 1️⃣ Find internal Patient.id from hospital patientId
     const patient = await prisma.patient.findUnique({
-      where: { patientId: Number(patientId) }, // hospital number
+      where: { patientId: Number(patientId) },
     });
 
     if (!patient) {
@@ -26,10 +24,9 @@ export const createMedicalRecord = async (req, res) => {
       });
     }
 
-    // 2️⃣ Create MedicalRecord using internal patient ID
     const record = await prisma.medicalRecord.create({
       data: {
-        patientId: patient.id,       // ✅ internal PK
+        patientId: patient.id,
         departmentId: Number(departmentId),
         doctorId: Number(doctorId),
         procedureId: Number(procedureId),
@@ -56,28 +53,34 @@ export const createMedicalRecord = async (req, res) => {
   }
 };
 
-// ✅ Get all medical records for a patient (using hospital number)
 export const getMedicalRecordsByPatient = async (req, res) => {
   try {
     const { patientId } = req.params;
 
-    // 1️⃣ Find internal Patient.id first
+    // 1️⃣ Resolve internal Patient.id
     const patient = await prisma.patient.findUnique({
-      where: { patientId: Number(patientId) }, // hospital number
+      where: { patientId: Number(patientId) },
+      include: {
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
     });
 
-    if (!patient) {
+    if (!patient)
       return res.status(404).json({
         success: false,
         message: `Patient with patientId ${patientId} not found`,
       });
-    }
 
-    // 2️⃣ Get all MedicalRecords using internal ID
+    // 2️⃣ Fetch medical records using internal PK
     const records = await prisma.medicalRecord.findMany({
-      where: { patientId: patient.id }, // internal PK
+      where: { patientId: patient.id },
       include: {
-        patient: true,
         doctor: true,
         department: true,
         procedure: true,
@@ -85,19 +88,19 @@ export const getMedicalRecordsByPatient = async (req, res) => {
       orderBy: { visitDate: "desc" },
     });
 
-    if (!records.length) {
-      return res.status(404).json({
-        success: false,
-        message: "No medical records found for this patient",
-      });
-    }
-
-    res.json({ success: true, data: { patient: records[0].patient, records } });
+    // 3️⃣ Return empty array instead of 404 (better UX)
+    return res.status(200).json({
+      success: true,
+      patient,
+      records,
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({
+    console.error("getMedicalRecordsByPatient error:", error);
+
+    return res.status(500).json({
       success: false,
       message: "Server error",
     });
   }
 };
+
