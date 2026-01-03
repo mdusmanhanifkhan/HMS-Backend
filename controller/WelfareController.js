@@ -72,7 +72,7 @@ export const createWelfarePatient = async (req, res) => {
 
     res.status(201).json({ status: 201, message: 'Welfare record created', data: welfare })
   } catch (error) {
-    sendError(res, 500, 'Server error')
+    sendError(res, 500, 'Server error' , error)
   }
 }
 

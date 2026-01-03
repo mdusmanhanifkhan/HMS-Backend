@@ -102,7 +102,7 @@ export const getDepartments = async (req, res) => {
     if (!departments.length)
       return sendError(
         res,
-        404,
+        200,
         search
           ? `No departments match "${search}"`
           : status !== undefined && status !== "all"
