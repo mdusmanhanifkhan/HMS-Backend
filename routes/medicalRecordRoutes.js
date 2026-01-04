@@ -7,6 +7,6 @@ import {
 const router = express.Router()
 
 router.post('/medical-records', createMedicalRecord)
-router.get('/medical-records/:patientId', getMedicalRecordsByPatient)
+// router.get('/medical-records/:patientId', getMedicalRecordsByPatient)
 
 export default router
