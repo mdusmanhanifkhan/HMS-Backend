@@ -57,7 +57,6 @@ export const getMedicalRecordsByPatient = async (req, res) => {
   try {
     const { patientId } = req.params;
 
-    // 1️⃣ Resolve internal Patient.id
     const patient = await prisma.patient.findUnique({
       where: { patientId: Number(patientId) },
       include: {
@@ -77,7 +76,6 @@ export const getMedicalRecordsByPatient = async (req, res) => {
         message: `Patient with patientId ${patientId} not found`,
       });
 
-    // 2️⃣ Fetch medical records using internal PK
     const records = await prisma.medicalRecord.findMany({
       where: { patientId: patient.id },
       include: {
@@ -88,7 +86,6 @@ export const getMedicalRecordsByPatient = async (req, res) => {
       orderBy: { visitDate: "desc" },
     });
 
-    // 3️⃣ Return empty array instead of 404 (better UX)
     return res.status(200).json({
       success: true,
       patient,
@@ -104,3 +101,10 @@ export const getMedicalRecordsByPatient = async (req, res) => {
   }
 };
 
+export const getMedicalRecords = async (req,res)=>{
+    try {
+        
+    } catch (error) {
+        
+    }
+}
