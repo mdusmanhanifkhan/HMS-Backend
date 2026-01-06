@@ -38,7 +38,10 @@ pipeline {
        stage("Deploy using Docker Compose") {
            steps {
                 sh '''
-                   docker-compose down --remove-orphans
+                  # Stop & remove all containers and orphans
+                   docker-compose down --rmi all --volumes --remove-orphans
+                   # Remove dangling images just in case
+                   docker image prune -f
                    docker-compose up -d --build
                    '''
     }
