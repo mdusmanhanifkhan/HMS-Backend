@@ -11,11 +11,10 @@ const APP_BASE_URL = process.env.APP_BASE_URL;
 const APP_BASE_URL_WWW = process.env.APP_BASE_URL_WWW;
 
 app.use(cors({
-  origin: [
   origin: true,
   credentials: true, 
 }))
-i
+
 app.use(express.json())
 app.use(express.urlencoded({extended:false}))
 app.use(routes)
