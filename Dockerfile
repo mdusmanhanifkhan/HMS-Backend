@@ -11,6 +11,9 @@ RUN npm install
 # Copy remaining source
 COPY . .
 
+# Generate Prisma client during build
+RUN npx prisma generate
+
 # ---------- Production Stage ----------
 FROM node:18-alpine
 

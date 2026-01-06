@@ -12,14 +12,10 @@ const APP_BASE_URL_WWW = process.env.APP_BASE_URL_WWW;
 
 app.use(cors({
   origin: [
-    "https://hikarimed.online",
-    "https://www.hikarimed.online",
-    "https://hikarimed.vercel.app",
-    "http://localhost:5173"
-  ],
+  origin: true,
   credentials: true, 
 }))
-
+i
 app.use(express.json())
 app.use(express.urlencoded({extended:false}))
 app.use(routes)
