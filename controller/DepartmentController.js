@@ -96,7 +96,7 @@ export const getDepartments = async (req, res) => {
 
     const departments = await prisma.department.findMany({
       where,
-      orderBy: { id: "asc" },
+      orderBy: { id: "desc" },
     });
 
     if (!departments.length)

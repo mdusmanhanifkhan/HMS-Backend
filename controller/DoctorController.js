@@ -190,7 +190,7 @@ export const getDoctors = async (req, res) => {
         departmentLinks: { include: { department: true } },
         feeLinks: { include: { feePolicy: true, procedure: true } },
       },
-      orderBy: { name: "asc" },
+      orderBy: { name: "desc" },
     });
 
     return res.status(200).json({

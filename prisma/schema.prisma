@@ -27,6 +27,7 @@ model Department {
   doctorLinks        DoctorDepartment[]
   DoctorProcedureFee DoctorProcedureFee[]
   MedicalRecord      MedicalRecord[]
+  labFees            LabFee[]
 
   @@index([name])
 }
@@ -47,6 +48,7 @@ model Procedure {
 
   feeLinks      DoctorProcedureFee[]
   MedicalRecord MedicalRecord[]
+  labFees       LabFee[]
 
   @@unique([departmentId, name])
   @@index([departmentId])
@@ -168,22 +170,22 @@ model DoctorProcedureFee {
 }
 
 model Patient {
-  id            Int             @id @default(autoincrement())
-  patientId     Int             @unique
-  name          String
-  guardianName  String
-  gender        String
-  age           Int
-  maritalStatus String
-  bloodGroup    String
-  cnicNumber    String
-  phoneNumber   String
-  address       String
-  createdAt     DateTime        @default(now())
-  welfareRecord WelfarePatient?
-  MedicalRecord MedicalRecord[]
+  id              Int             @id @default(autoincrement())
+  patientId       Int             @unique
+  name            String
+  guardianName    String
+  gender          String
+  age             Int
+  maritalStatus   String
+  bloodGroup      String
+  cnicNumber      String
+  phoneNumber     String
+  address         String
+  createdAt       DateTime        @default(now())
+  welfareRecord   WelfarePatient?
+  MedicalRecord   MedicalRecord[]
   createdByUserId Int?
-  createdBy       User?   @relation("PatientCreatedBy", fields: [createdByUserId], references: [id])
+  createdBy       User?           @relation("PatientCreatedBy", fields: [createdByUserId], references: [id])
 }
 
 model WelfarePatient {
@@ -259,15 +261,39 @@ model Role {
 }
 
 model User {
-  id             Int             @id @default(autoincrement())
-  name           String
-  email          String          @unique
-  password       String
-  roleId         Int
-  role           Role            @relation(fields: [roleId], references: [id], onDelete: Restrict)
-  status         Boolean         @default(true)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  roleId    Int
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  status    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   createdPatients Patient[] @relation("PatientCreatedBy")
+}
+
+model LabFee {
+  id     Int     @id @default(autoincrement())
+  status Boolean @default(true)
+
+  departmentId Int
+  procedureId  Int
+
+  price      Decimal @db.Decimal(10, 2)
+  discount   Float   @default(0)
+  finalPrice Decimal @db.Decimal(10, 2)
+
+  description String? @db.VarChar(500)
+
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  procedure  Procedure  @relation(fields: [procedureId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([procedureId, departmentId])
+  @@index([departmentId])
+  @@index([procedureId])
 }
