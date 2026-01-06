@@ -53,6 +53,7 @@ export const loginUser = async (req, res) => {
     });
 
   } catch (error) {
+    console.log(error)
     return sendError(res, 500, "Server error during login");
   }
 };
