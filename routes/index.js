@@ -10,6 +10,7 @@ import feeRoutes from "./feeRoutes.js"
 import authRoutes from "./authRoutes.js"
 import roleRoutes from "./roleRoutes.js"
 import medicalRecordsRoutes from "./medicalRecordRoutes.js"
+import labFeesRoutes from "./labFeeRoutes.js"
 
 
 // ✅ Import middleware
@@ -34,8 +35,7 @@ router.use("/api", protect,  doctorRoutes)
 router.use("/api", protect,  patientRoutes)
 router.use("/api", protect,  welfareRoutes)
 router.use("/api", protect,  feeRoutes)
-
-// Example future:
 router.use("/api", protect, medicalRecordsRoutes)
+router.use("/api", protect, labFeesRoutes)
 
 export default router

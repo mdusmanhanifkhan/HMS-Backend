@@ -96,13 +96,13 @@ export const getDepartments = async (req, res) => {
 
     const departments = await prisma.department.findMany({
       where,
-      orderBy: { id: "asc" },
+      orderBy: { id: "desc" },
     });
 
     if (!departments.length)
       return sendError(
         res,
-        404,
+        200,
         search
           ? `No departments match "${search}"`
           : status !== undefined && status !== "all"
