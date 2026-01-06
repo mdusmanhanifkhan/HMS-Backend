@@ -2,14 +2,10 @@ version: "3.9"
 
 services:
   app:
-    container_name: hms-backend-app
     build: .
     ports:
       - "3000:3000"
     restart: unless-stopped
-    env_file:
-      NODE_ENV: production
-      PORT: 3000
     volumes:
       - .:/app
       - /app/node_modules

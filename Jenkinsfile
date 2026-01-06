@@ -38,26 +38,11 @@ pipeline {
        stage("Deploy using Docker Compose") {
            steps {
                 sh '''
-           # 1️⃣ Stop & remove the existing container if it exists
-            docker rm -f hms-backend-app || true
-
-            # 2️⃣ Remove the existing image if it exists
-            docker rmi hms-backend-app:latest || true
-
-            # 3️⃣ Build a new image from Dockerfile
-            docker build -t hms-backend-app:latest .
-
-            # 4️⃣ Run the container
-            docker run -d \
-  --name hms-backend-app \
-  -p 3000:3000 \
-  --env NODE_ENV=production \
-  --env PORT=3000 \
-  --env CORE_ORIGIN_FRONTEND=https://hikarimed.vercel.app \
-  --env APP_BASE_URL=https://hikarimed.online \
-  --env APP_BASE_URL_WWW=https://www.hikarimed.online \
-  hms-backend-app:latest
-
+                  # Stop & remove all containers and orphans
+                   docker-compose down --rmi all --volumes --remove-orphans
+                   # Remove dangling images just in case
+                   docker image prune -f
+                   docker-compose up -d --build
                    '''
     }
 }
