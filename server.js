@@ -10,8 +10,16 @@ const FRONTEND_SERVICE_ORIGIN = process.env.CORE_ORIGIN_FRONTEND;
 const APP_BASE_URL = process.env.APP_BASE_URL;
 const APP_BASE_URL_WWW = process.env.APP_BASE_URL_WWW;
 
+const allowedOrigins = [
+  "https://hikarimed.online",
+  "https://www.hikarimed.online",
+  "https://hikarimed.vercel.app",
+  "http://localhost:5173",
+];
+
+
 app.use(cors({
-  origin: true,
+  origin: allowedOrigins,
   credentials: true, 
 }))
 
