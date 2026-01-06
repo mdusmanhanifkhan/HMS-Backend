@@ -5,7 +5,7 @@ import routes from "./routes/index.js"
 import cors from "cors"
 const app = express()
 
-const port = process.env.PORT;
+const port = process.env.PORT || 3000;
 const FRONTEND_SERVICE_ORIGIN = process.env.CORE_ORIGIN_FRONTEND; 
 const APP_BASE_URL = process.env.APP_BASE_URL;
 const APP_BASE_URL_WWW = process.env.APP_BASE_URL_WWW;
