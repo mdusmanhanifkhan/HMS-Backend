@@ -135,6 +135,50 @@ export const getProcedures = async (req, res) => {
     return sendError(res, 500, "An unexpected error occurred while fetching procedures.");
   }
 };
+export const getActiveProcedures = async (req, res) => {
+  try {
+    const { search } = req.query;
+
+    // ✅ Always fetch only active procedures
+    const where = {
+      status: true,
+      ...(search && {
+        OR: [
+          { name: { contains: search, mode: "insensitive" } },
+          { shortCode: { contains: search, mode: "insensitive" } },
+          { description: { contains: search, mode: "insensitive" } },
+        ],
+      }),
+    };
+
+    const procedures = await prisma.procedure.findMany({
+      where,
+      include: { department: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Active procedures retrieved successfully",
+      count: procedures.length,
+      data: procedures,
+    });
+
+  } catch (error) {
+    console.error("Error fetching procedures:", error);
+
+    if (error.code === "P2023") {
+      return sendError(res, 400, "Invalid query parameters.");
+    }
+
+    if (error.code === "P2002") {
+      return sendError(res, 409, "Database constraint violation.");
+    }
+
+    return sendError(res, 500, "An unexpected error occurred while fetching procedures.");
+  }
+};
+
 
 // Get Single Procedure
 export const getProcedureById = async (req, res) => {

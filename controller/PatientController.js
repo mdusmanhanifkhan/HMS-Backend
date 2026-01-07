@@ -144,7 +144,7 @@ export const getPatients = async (req, res) => {
           },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { patientId: "desc" },
     });
 
     if (!patients.length)
