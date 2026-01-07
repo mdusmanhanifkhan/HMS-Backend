@@ -2,17 +2,19 @@ version: "3.9"
 
 services:
   app:
-    build: .
-    ports:
-      - "3000:3000"
-    restart: unless-stopped
-    volumes:
-      - .:/app
-      - /app/node_modules
-environment:
-      PORT: 3000
-      DATABASE_URL: postgresql://postgres:.adgjmbcz1@3.15.5.142:5432/hikarimed_db?schema=public
-      JWT_SECRET: D9w!uZ4f#Jr2pQ8Lk7@Yt3$BnV6sM0^cR1eF&hW9xPzQ5!mT2
-      CORE_ORIGIN_FRONTEND: https://hikarimed.vercel.app
-      APP_BASE_URL: https://hikarimed.online
-      APP_BASE_URL_WWW: https://www.hikarimed.online
+  container_name: hms-backend-app
+  build: .
+  ports:
+    - "3000:3000"
+  restart: unless-stopped
+  environment:
+    - PORT=3000
+    - DATABASE_URL=postgresql://postgres:.adgjmbcz1@3.15.5.142:5432/hikarimed_db?schema=public
+    - JWT_SECRET=D9w!uZ4f#Jr2pQ8Lk7@Yt3$BnV6sM0^cR1eF&hW9xPzQ5!mT2
+    - CORE_ORIGIN_FRONTEND=https://hikarimed.vercel.app
+    - APP_BASE_URL=https://hikarimed.online
+    - APP_BASE_URL_WWW=https://www.hikarimed.online
+  volumes:
+    - .:/app
+    - /app/node_modules
+
