@@ -5,7 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("postgresql://postgres:.adgjmbcz1@3.15.5.142:5432/hikarimed_db?schema=public")
 }
 
 /**
