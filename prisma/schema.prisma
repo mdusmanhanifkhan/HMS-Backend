@@ -226,7 +226,7 @@ model MedicalRecord {
   id           Int @id @default(autoincrement())
   patientId    Int
   departmentId Int
-  doctorId     Int
+  doctorId     Int?
   procedureId  Int
 
   visitDate DateTime @default(now())
@@ -236,7 +236,7 @@ model MedicalRecord {
   notes     String?  @db.VarChar(500)
 
   patient    Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  doctor     Doctor     @relation(fields: [doctorId], references: [id], onDelete: Restrict)
+  doctor     Doctor?     @relation(fields: [doctorId], references: [id], onDelete: Restrict)
   department Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
   procedure  Procedure  @relation(fields: [procedureId], references: [id], onDelete: Restrict)
 

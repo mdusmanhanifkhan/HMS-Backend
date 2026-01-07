@@ -81,10 +81,11 @@ export const createDepartment = async (req, res) => {
 // Get all departments (with optional search)
 export const getDepartments = async (req, res) => {
   try {
-    const { search, status } = req.query;
+    const { search } = req.query;
 
+    // Always return only active departments (status = true)
     const where = {
-      ...(status !== undefined && status !== "all" && { status: status === "true" }),
+      status: true,
       ...(search && {
         OR: [
           { name: { contains: search, mode: "insensitive" } },
@@ -103,16 +104,12 @@ export const getDepartments = async (req, res) => {
       return sendError(
         res,
         200,
-        search
-          ? `No departments match "${search}"`
-          : status !== undefined && status !== "all"
-          ? `No ${status === "true" ? "active" : "inactive"} departments found`
-          : "No departments found"
+        search ? `No active departments match "${search}"` : "No active departments found"
       );
 
     return res.status(200).json({
       status: 200,
-      message: "Departments retrieved successfully",
+      message: "Active departments retrieved successfully",
       data: departments,
     });
   } catch (error) {

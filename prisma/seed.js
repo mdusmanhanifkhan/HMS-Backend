@@ -74,6 +74,8 @@ async function main() {
     await ensureUser("reception@system.com", "Reception", "Hikarimed@01", patientRole.id);
     await ensureUser("reception01@system.com", "Reception One", "reception@01", patientRole.id);
     await ensureUser("reception02@system.com", "Reception Two", "reception@02", patientRole.id);
+    await ensureUser("reception02@system.com", "Reception Three", "reception@03", patientRole.id);
+    await ensureUser("reception02@system.com", "Reception Three", "reception@04", patientRole.id);
 
     console.log("Seeding completed!");
   } catch (error) {
