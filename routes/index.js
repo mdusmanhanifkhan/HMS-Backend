@@ -11,6 +11,7 @@ import authRoutes from "./authRoutes.js"
 import roleRoutes from "./roleRoutes.js"
 import medicalRecordsRoutes from "./medicalRecordRoutes.js"
 import labFeesRoutes from "./labFeeRoutes.js"
+import financialRoutes from "./financialStatusRoutes.js"
 
 
 // ✅ Import middleware
@@ -37,5 +38,6 @@ router.use("/api", protect,  welfareRoutes)
 router.use("/api", protect,  feeRoutes)
 router.use("/api", protect, medicalRecordsRoutes)
 router.use("/api", protect, labFeesRoutes)
+router.use("/api", protect, financialRoutes)
 
 export default router
