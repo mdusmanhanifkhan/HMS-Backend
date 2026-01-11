@@ -295,80 +295,85 @@ export const deletePatient = async (req, res) => {
   }
 };
 
-// ✅ Search patients with optional filters
+// ✅ Search patients with optional filters and pagination
 export const searchPatients = async (req, res) => {
   try {
-    // Get filter query params
-    const { name, patientId, cnic, phone } = req.query;
+    const { name, patientId, cnic, phone, page, limit } = req.query;
 
-    // Build dynamic filter
+    // ✅ Pagination defaults
+    const currentPage = page && Number(page) > 0 ? Number(page) : 1;
+    const pageSize = limit && Number(limit) > 0 ? Number(limit) : 20;
+    const skip = (currentPage - 1) * pageSize;
+
+    // ✅ Build dynamic filter
     const filters = { OR: [] };
 
-    if (name) {
-      filters.OR.push({ name: { contains: name, mode: 'insensitive' } });
-    }
-    if (patientId && !isNaN(Number(patientId))) {
-      filters.OR.push({ patientId: Number(patientId) });
-    }
-    if (cnic) {
-      filters.OR.push({ cnicNumber: { contains: cnic } });
-    }
-    if (phone) {
-      filters.OR.push({ phoneNumber: { contains: phone } });
-    }
+    if (name) filters.OR.push({ name: { contains: name, mode: "insensitive" } });
+    if (patientId && !isNaN(Number(patientId))) filters.OR.push({ patientId: Number(patientId) });
+    if (cnic) filters.OR.push({ cnicNumber: { contains: cnic, mode: "insensitive" } });
+    if (phone) filters.OR.push({ phoneNumber: { contains: phone, mode: "insensitive" } });
 
-    // If no filters provided, fetch all patients
-    const patients = await prisma.patient.findMany({
-      where: filters.OR.length ? filters : undefined,
-      include: {
-        welfareRecord: {
-          select: {
-            welfareCategory: true,
-            discountType: true,
-            discountPercentage: true,
-            startDate: true,
-            endDate: true,
+    const whereCondition = filters.OR.length ? filters : undefined;
+
+    // ✅ Fetch patients and total count in parallel
+    const [patients, total] = await Promise.all([
+      prisma.patient.findMany({
+        where: whereCondition,
+        include: {
+          welfareRecord: {
+            select: {
+              welfareCategory: true,
+              discountType: true,
+              discountPercentage: true,
+              startDate: true,
+              endDate: true,
+            },
           },
         },
-      },
-    });
+        skip,
+        take: pageSize,
+        orderBy: { patientId: "desc" },
+      }),
+      prisma.patient.count({ where: whereCondition }),
+    ]);
 
-    if (!patients || patients.length === 0) {
-      return res.status(200).json({
-        status: 200,
-        message: 'No patients found matching your query',
-        data: [],
-      });
-    }
-
+    // ✅ Format welfare info
     const today = new Date();
-    const results = patients.map((patient) => {
-      const welfare = patient.welfareRecord;
+    const formatted = patients.map((p) => {
+      const welfare = p.welfareRecord;
       const isActive =
         welfare &&
         (!welfare.startDate || new Date(welfare.startDate) <= today) &&
         (!welfare.endDate || new Date(welfare.endDate) >= today);
 
       return {
-        ...patient,
+        ...p,
         isWelfare: !!welfare,
-        welfareCategory: welfare?.welfareCategory || null,
-        discountType: welfare?.discountType || null,
+        welfareCategory: welfare ? welfare.welfareCategory : null,
+        discountType: welfare ? welfare.discountType : null,
         discountApplicable: isActive ? welfare.discountPercentage : 0,
-        discountStatus: isActive ? 'Active' : welfare ? 'Expired' : 'None',
+        discountStatus: isActive ? "Active" : welfare ? "Expired" : "None",
       };
     });
 
     return res.status(200).json({
       status: 200,
-      message: 'Patients found successfully',
-      data: results,
+      message: formatted.length ? "Patients found successfully" : "No patients found",
+      data: formatted,
+      pagination: {
+        total,
+        page: currentPage,
+        limit: pageSize,
+        totalPages: Math.ceil(total / pageSize),
+        hasMore: skip + formatted.length < total,
+      },
     });
   } catch (error) {
-    console.error('Error searching patients:', error);
+    console.error("Error searching patients:", error);
     return res.status(500).json({
       status: 500,
-      message: 'Internal server error',
+      message: "Internal server error",
     });
   }
 };
+

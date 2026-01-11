@@ -28,6 +28,7 @@ model Department {
   DoctorProcedureFee DoctorProcedureFee[]
   MedicalRecord      MedicalRecord[]
   labFees            LabFee[]
+  medicalRecordItems MedicalRecordItem[]
 
   @@index([name])
 }
@@ -46,9 +47,10 @@ model Procedure {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
-  feeLinks      DoctorProcedureFee[]
-  MedicalRecord MedicalRecord[]
-  labFees       LabFee[]
+  feeLinks           DoctorProcedureFee[]
+  MedicalRecord      MedicalRecord[]
+  labFees            LabFee[]
+  medicalRecordItems MedicalRecordItem[]
 
   @@unique([departmentId, name])
   @@index([departmentId])
@@ -87,9 +89,10 @@ model Doctor {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  departmentLinks DoctorDepartment[]
-  feeLinks        DoctorProcedureFee[]
-  MedicalRecord   MedicalRecord[]
+  departmentLinks    DoctorDepartment[]
+  feeLinks           DoctorProcedureFee[]
+  MedicalRecord      MedicalRecord[]
+  medicalRecordItems MedicalRecordItem[]
 
   @@index([name])
   @@index([specialization])
@@ -223,24 +226,50 @@ model WelfarePatient {
 }
 
 model MedicalRecord {
-  id           Int @id @default(autoincrement())
-  patientId    Int
+  id         Int      @id @default(autoincrement())
+  patientId  Int
+  recordDate DateTime @default(now())
+
+  totalFee Decimal @default(0) @db.Decimal(10, 2)
+  discount Float   @default(0)
+  finalFee Decimal @db.Decimal(10, 2)
+  notes    String? @db.VarChar(500)
+
+  patient Patient             @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  items   MedicalRecordItem[]
+
+  createdAt    DateTime    @default(now())
+  department   Department? @relation(fields: [departmentId], references: [id])
+  departmentId Int?
+  procedure    Procedure?  @relation(fields: [procedureId], references: [id])
+  procedureId  Int?
+  doctor       Doctor?     @relation(fields: [doctorId], references: [id])
+  doctorId     Int?
+
+  @@index([patientId])
+}
+
+model MedicalRecordItem {
+  id              Int @id @default(autoincrement())
+  medicalRecordId Int
+
   departmentId Int
   doctorId     Int?
   procedureId  Int
 
-  visitDate DateTime @default(now())
-  fee       Decimal  @db.Decimal(10, 2)
-  discount  Float    @default(0)
-  finalFee  Decimal  @db.Decimal(10, 2)
-  notes     String?  @db.VarChar(500)
+  fee      Decimal @db.Decimal(10, 2)
+  discount Float   @default(0)
+  finalFee Decimal @db.Decimal(10, 2)
+  notes    String? @db.VarChar(500)
 
-  patient    Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  doctor     Doctor?     @relation(fields: [doctorId], references: [id], onDelete: Restrict)
-  department Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
-  procedure  Procedure  @relation(fields: [procedureId], references: [id], onDelete: Restrict)
+  medicalRecord MedicalRecord @relation(fields: [medicalRecordId], references: [id], onDelete: Cascade)
+  department    Department    @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  doctor        Doctor?       @relation(fields: [doctorId], references: [id], onDelete: Restrict)
+  procedure     Procedure     @relation(fields: [procedureId], references: [id], onDelete: Restrict)
 
-  createdAt DateTime @default(now())
+  @@index([medicalRecordId])
+  @@index([departmentId])
+  @@index([doctorId])
 }
 
 model Role {
