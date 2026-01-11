@@ -57,6 +57,8 @@ async function main() {
       canManageProcedures: true,
       canManageFees: true,
       canViewReports: true,
+      canManageFinanceReport:true,
+      canManageToken:true
     });
 
     const patientRole = await ensureRole("patientManager", "Can manage patients only", {
@@ -68,10 +70,11 @@ async function main() {
       canManageProcedures: false,
       canManageFees: false,
       canViewReports: false,
+      canManageToken:true
     });
 
     await ensureUser("superadmin@system.com", "Super Admin", "superadmin@01", adminRole.id);
-    await ensureUser("reception@system.com", "Reception", "Hikarimed@01", patientRole.id);
+    await ensureUser("developer@system.com", "Developer", "developer@khan", patientRole.id);
     await ensureUser("reception01@system.com", "Reception One", "reception@01", patientRole.id);
     await ensureUser("reception02@system.com", "Reception Two", "reception@02", patientRole.id);
     await ensureUser("reception02@system.com", "Reception Three", "reception@03", patientRole.id);

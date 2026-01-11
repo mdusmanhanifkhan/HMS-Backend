@@ -285,6 +285,8 @@ model Role {
   canManageFees            Boolean @default(false)
   canViewReports           Boolean @default(false)
   canManagePatientsHistory Boolean @default(false)
+  canManageFinanceReport   Boolean @default(false)
+  canManageToken           Boolean @default(false)
 
   users User[]
 }
