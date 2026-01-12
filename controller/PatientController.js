@@ -1,5 +1,5 @@
 import prisma from "../DB/db.config.js";
-
+import { Prisma } from "@prisma/client";
 // Constants
 const NAME_MAX = 100;
 const IDCARD_MAX = 20;
@@ -33,32 +33,32 @@ const validatePatientInput = (patient) => {
   return { errors, missingFields };
 };
 
-const generateSequentialPatientId = async () => {
+export async function generateSequentialPatientId(tx) {
   const now = new Date();
-  const year = String(now.getFullYear()).slice(-2); // e.g. "25"
-  const month = String(now.getMonth() + 1).padStart(2, "0"); // e.g. "11"
-  const prefix = `${year}${month}`; // "2511"
+  const year = String(now.getFullYear()).slice(-2);
+  const month = String(now.getMonth() + 1).padStart(2, "0");
 
-  // Find the latest patient for this month
-  const latestPatient = await prisma.patient.findFirst({
+  const prefix = Number(`${year}${month}00000`);
+  const prefixEnd = Number(`${year}${month}99999`);
+
+  const last = await tx.patient.findFirst({
     where: {
       patientId: {
-        gte: Number(prefix + "00"), // >= 251100
-        lt: Number(prefix + "99"), // < 251199
+        gte: prefix,
+        lte: prefixEnd,
       },
     },
     orderBy: { patientId: "desc" },
+    select: { patientId: true },
   });
 
-  const nextNumber = latestPatient?.patientId
-    ? (latestPatient.patientId % 100) + 1
-    : 1;
+  if (last && last.patientId >= prefixEnd) {
+    throw new Error("Monthly patientId limit reached");
+  }
 
-  const patientId = Number(`${prefix}${String(nextNumber).padStart(2, "0")}`);
-  return patientId;
-};
+  return last ? last.patientId + 1 : prefix + 1;
+}
 
-// ✅ Create Patient
 export const createPatient = async (req, res) => {
   try {
     const {
@@ -71,39 +71,43 @@ export const createPatient = async (req, res) => {
       phoneNumber,
       cnicNumber,
       address,
-      createdByUserId
+      createdByUserId,
     } = req.body;
 
     const { errors, missingFields } = validatePatientInput(req.body);
-    if (missingFields.length > 0)
+    if (missingFields.length > 0) {
       return sendError(
         res,
         400,
-        `Validation failed: ${missingFields.join(", ")} ${
-          missingFields.length > 1 ? "are required" : "is required"
-        }`,
+        `Validation failed: ${missingFields.join(", ")}`,
         errors
       );
+    }
 
-    // Generate custom numeric MR number
-    const patientId = await generateSequentialPatientId();
+    const patient = await prisma.$transaction(
+      async (tx) => {
+        const patientId = await generateSequentialPatientId(tx);
 
-    // Create patient
-    const patient = await prisma.patient.create({
-      data: {
-        patientId,
-        name,
-        guardianName,
-        gender,
-        age: Number(age),
-        maritalStatus,
-        bloodGroup,
-        phoneNumber,
-        cnicNumber,
-        address,
-        createdByUserId
+        return tx.patient.create({
+          data: {
+            patientId,
+            name,
+            guardianName,
+            gender,
+            age: Number(age),
+            maritalStatus,
+            bloodGroup,
+            phoneNumber,
+            cnicNumber,
+            address,
+            createdByUserId,
+          },
+        });
       },
-    });
+      {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      }
+    );
 
     return res.status(201).json({
       status: 201,
@@ -111,9 +115,16 @@ export const createPatient = async (req, res) => {
       data: patient,
     });
   } catch (error) {
+    // Graceful duplicate handling (last line of defense)
+    if (error.code === "P2002") {
+      return sendError(res, 409, "Patient ID conflict, please retry");
+    }
+
+    console.error(error);
     return sendError(res, 500, "Internal server error");
   }
 };
+
 
 // ✅ Get all patients (with welfare info)
 export const getPatients = async (req, res) => {
