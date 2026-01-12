@@ -238,7 +238,10 @@ model MedicalRecord {
   patient Patient             @relation(fields: [patientId], references: [id], onDelete: Cascade)
   items   MedicalRecordItem[]
 
-  createdAt    DateTime    @default(now())
+  createdAt DateTime @default(now())
+
+  user         User?       @relation(fields: [userId], references: [id])
+  userId       Int?
   department   Department? @relation(fields: [departmentId], references: [id])
   departmentId Int?
   procedure    Procedure?  @relation(fields: [procedureId], references: [id])
@@ -302,7 +305,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  createdPatients Patient[] @relation("PatientCreatedBy")
+  createdPatients Patient[]       @relation("PatientCreatedBy")
+  medicalRecords  MedicalRecord[]
 }
 
 model LabFee {
