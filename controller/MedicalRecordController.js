@@ -1,107 +1,5 @@
+import XLSX from "xlsx";
 import prisma from "../DB/db.config.js";
-
-// export const createMedicalRecord = async (req, res) => {
-//   try {
-//     const { patientId, discount = 0, notes, items, createdByUserId } = req.body;
-
-//     // Validate items
-//     if (!items || !Array.isArray(items) || items.length === 0) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "At least one medical record item is required",
-//       });
-//     }
-
-//     // Find patient
-//     const patient = await prisma.patient.findUnique({
-//       where: { patientId: Number(patientId) }, // use 'id', not 'patientId' here
-//     });
-
-//     if (!patient) {
-//       return res.status(404).json({
-//         success: false,
-//         message: `Patient with id ${patientId} not found`,
-//       });
-//     }
-
-//     // Prepare items safely
-//     const preparedItems = items.map((item) => {
-//       const fee = Number(item.fee || 0);
-//       const itemDiscount = Number(item.discount || 0);
-//       return {
-//         fee,
-//         discount: itemDiscount,
-//         finalFee: fee - itemDiscount, // always calculate finalFee
-//         notes: item.notes || null,
-
-//         // Connect relations
-//         department: { connect: { id: Number(item.departmentId) } },
-//         procedure: { connect: { id: Number(item.procedureId) } },
-//         doctor: item.doctorId
-//           ? { connect: { id: Number(item.doctorId) } }
-//           : undefined,
-//       };
-//     });
-
-//     // Calculate totals for the header
-//     const totalFee = preparedItems.reduce((sum, item) => sum + item.fee, 0);
-//     const finalFee =
-//       preparedItems.reduce((sum, item) => sum + item.finalFee, 0) -
-//       Number(discount);
-
-//     // Create MedicalRecord with items
-//     const medicalRecord = await prisma.medicalRecord.create({
-//       data: {
-//         patientId: patient.id,
-//         totalFee,
-//         discount: Number(discount),
-//         finalFee,
-//         notes: notes || null,
-//         createdAt: new Date(),
-
-//         userId: Number(createdByUserId),
-
-//         // Items with relations
-//         items: {
-//           create: preparedItems,
-//         },
-//       },
-//       include: {
-//         patient: true,
-//         items: {
-//           include: {
-//             department: true,
-//             doctor: true,
-//             procedure: true,
-//           },
-//         },
-//       },
-//     });
-
-//     return res.status(201).json({
-//       success: true,
-//       data: {
-//         id: medicalRecord.id,
-//         patientId: medicalRecord.patientId,
-//         recordDate: medicalRecord.recordDate,
-//         totalFee: medicalRecord.totalFee,
-//         discount: medicalRecord.discount,
-//         finalFee: medicalRecord.finalFee,
-//         notes: medicalRecord.notes,
-//         createdAt: medicalRecord.createdAt,
-//         patient: medicalRecord.patient,
-//         items: medicalRecord.items,
-//       },
-//     });
-//   } catch (error) {
-//     console.error("createMedicalRecord error:", error);
-//     return res.status(500).json({
-//       success: false,
-//       message: error.message || "Server error",
-//     });
-//   }
-// };
-
 
 export const createMedicalRecord = async (req, res) => {
   try {
@@ -159,8 +57,7 @@ export const createMedicalRecord = async (req, res) => {
     // ✅ Calculate totals
     const totalFee = preparedItems.reduce((sum, i) => sum + i.fee, 0);
     const finalFee =
-      preparedItems.reduce((sum, i) => sum + i.finalFee, 0) -
-      Number(discount);
+      preparedItems.reduce((sum, i) => sum + i.finalFee, 0) - Number(discount);
 
     // ✅ Create medical record
     const medicalRecord = await prisma.medicalRecord.create({
@@ -220,6 +117,14 @@ export const getMedicalRecordsByPatient = async (req, res) => {
         MedicalRecord: {
           orderBy: { recordDate: "desc" },
           include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+              },
+            },
             items: {
               include: {
                 department: true,
@@ -254,8 +159,6 @@ export const getMedicalRecordsByPatient = async (req, res) => {
     });
   }
 };
-
-
 
 export const getMedicalRecords = async (req, res) => {
   try {
@@ -303,6 +206,102 @@ export const getMedicalRecords = async (req, res) => {
     });
   } catch (error) {
     console.error("getMedicalRecords error:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Server error",
+    });
+  }
+};
+
+export const exportMedicalRecordsExcel = async (req, res) => {
+  try {
+    const { from, to } = req.query;
+
+    const where = {};
+    if (from && to) {
+      where.recordDate = {
+        gte: new Date(from),
+        lte: new Date(new Date(to).setHours(23, 59, 59, 999)),
+      };
+    }
+
+    // ✅ Fetch medical records
+    const records = await prisma.medicalRecord.findMany({
+      where,
+      include: {
+        patient: true,
+        user: true, // receptionist / creator
+        items: {
+          include: {
+            department: true,
+            doctor: true,
+            procedure: true,
+          },
+        },
+      },
+      orderBy: { recordDate: "asc" },
+    });
+
+    // ✅ Flatten data for Excel
+    const rows = [];
+
+    records.forEach((record) => {
+      // If record has no items, still export one row
+      if (record.items.length === 0) {
+        rows.push({
+          Date: record.recordDate.toISOString().split("T")[0],
+          PatientID: record.patient.patientId,
+          PatientName: record.patient.name,
+          Department: record.department?.name || "",
+          Doctor: record.doctor?.name || "",
+          Procedure: record.procedure?.name || "",
+          Fee: Number(record.totalFee),
+          Discount: Number(record.discount),
+          FinalFee: Number(record.finalFee),
+          CreatedBy: record.user?.name || "",
+        });
+      }
+
+      // If record has items
+      record.items.forEach((item) => {
+        rows.push({
+          Date: record.recordDate.toISOString().split("T")[0],
+          PatientID: record.patient.patientId,
+          PatientName: record.patient.name,
+          Department: item.department?.name || "",
+          Doctor: item.doctor?.name || "",
+          Procedure: item.procedure?.name || "",
+          Fee: Number(item.fee),
+          Discount: Number(item.discount),
+          FinalFee: Number(item.finalFee),
+          CreatedBy: record.user?.name || "",
+        });
+      });
+    });
+
+    // ✅ Create Excel
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Medical Records");
+
+    // ✅ Response headers
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=medical-records.xlsx`
+    );
+
+    const buffer = XLSX.write(workbook, {
+      type: "buffer",
+      bookType: "xlsx",
+    });
+
+    return res.send(buffer);
+  } catch (error) {
+    console.error("exportMedicalRecordsExcel error:", error);
     return res.status(500).json({
       success: false,
       message: error.message || "Server error",
