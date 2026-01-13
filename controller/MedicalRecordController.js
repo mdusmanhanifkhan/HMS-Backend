@@ -1,10 +1,123 @@
 import prisma from "../DB/db.config.js";
 
+// export const createMedicalRecord = async (req, res) => {
+//   try {
+//     const { patientId, discount = 0, notes, items, createdByUserId } = req.body;
+
+//     // Validate items
+//     if (!items || !Array.isArray(items) || items.length === 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "At least one medical record item is required",
+//       });
+//     }
+
+//     // Find patient
+//     const patient = await prisma.patient.findUnique({
+//       where: { patientId: Number(patientId) }, // use 'id', not 'patientId' here
+//     });
+
+//     if (!patient) {
+//       return res.status(404).json({
+//         success: false,
+//         message: `Patient with id ${patientId} not found`,
+//       });
+//     }
+
+//     // Prepare items safely
+//     const preparedItems = items.map((item) => {
+//       const fee = Number(item.fee || 0);
+//       const itemDiscount = Number(item.discount || 0);
+//       return {
+//         fee,
+//         discount: itemDiscount,
+//         finalFee: fee - itemDiscount, // always calculate finalFee
+//         notes: item.notes || null,
+
+//         // Connect relations
+//         department: { connect: { id: Number(item.departmentId) } },
+//         procedure: { connect: { id: Number(item.procedureId) } },
+//         doctor: item.doctorId
+//           ? { connect: { id: Number(item.doctorId) } }
+//           : undefined,
+//       };
+//     });
+
+//     // Calculate totals for the header
+//     const totalFee = preparedItems.reduce((sum, item) => sum + item.fee, 0);
+//     const finalFee =
+//       preparedItems.reduce((sum, item) => sum + item.finalFee, 0) -
+//       Number(discount);
+
+//     // Create MedicalRecord with items
+//     const medicalRecord = await prisma.medicalRecord.create({
+//       data: {
+//         patientId: patient.id,
+//         totalFee,
+//         discount: Number(discount),
+//         finalFee,
+//         notes: notes || null,
+//         createdAt: new Date(),
+
+//         userId: Number(createdByUserId),
+
+//         // Items with relations
+//         items: {
+//           create: preparedItems,
+//         },
+//       },
+//       include: {
+//         patient: true,
+//         items: {
+//           include: {
+//             department: true,
+//             doctor: true,
+//             procedure: true,
+//           },
+//         },
+//       },
+//     });
+
+//     return res.status(201).json({
+//       success: true,
+//       data: {
+//         id: medicalRecord.id,
+//         patientId: medicalRecord.patientId,
+//         recordDate: medicalRecord.recordDate,
+//         totalFee: medicalRecord.totalFee,
+//         discount: medicalRecord.discount,
+//         finalFee: medicalRecord.finalFee,
+//         notes: medicalRecord.notes,
+//         createdAt: medicalRecord.createdAt,
+//         patient: medicalRecord.patient,
+//         items: medicalRecord.items,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("createMedicalRecord error:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: error.message || "Server error",
+//     });
+//   }
+// };
+
+
 export const createMedicalRecord = async (req, res) => {
   try {
-    const { patientId, discount = 0, notes, items, createdByUserId } = req.body;
+    // ✅ Get user from JWT
+    const userId = req.user?.id;
 
-    // Validate items
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized: user not found",
+      });
+    }
+
+    const { patientId, discount = 0, notes, items } = req.body;
+
+    // ✅ Validate items
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({
         success: false,
@@ -12,9 +125,9 @@ export const createMedicalRecord = async (req, res) => {
       });
     }
 
-    // Find patient
+    // ✅ Find patient
     const patient = await prisma.patient.findUnique({
-      where: { patientId: Number(patientId) }, // use 'id', not 'patientId' here
+      where: { patientId: Number(patientId) },
     });
 
     if (!patient) {
@@ -24,17 +137,17 @@ export const createMedicalRecord = async (req, res) => {
       });
     }
 
-    // Prepare items safely
+    // ✅ Prepare items
     const preparedItems = items.map((item) => {
       const fee = Number(item.fee || 0);
       const itemDiscount = Number(item.discount || 0);
+
       return {
         fee,
         discount: itemDiscount,
-        finalFee: fee - itemDiscount, // always calculate finalFee
+        finalFee: fee - itemDiscount,
         notes: item.notes || null,
 
-        // Connect relations
         department: { connect: { id: Number(item.departmentId) } },
         procedure: { connect: { id: Number(item.procedureId) } },
         doctor: item.doctorId
@@ -43,13 +156,13 @@ export const createMedicalRecord = async (req, res) => {
       };
     });
 
-    // Calculate totals for the header
-    const totalFee = preparedItems.reduce((sum, item) => sum + item.fee, 0);
+    // ✅ Calculate totals
+    const totalFee = preparedItems.reduce((sum, i) => sum + i.fee, 0);
     const finalFee =
-      preparedItems.reduce((sum, item) => sum + item.finalFee, 0) -
+      preparedItems.reduce((sum, i) => sum + i.finalFee, 0) -
       Number(discount);
 
-    // Create MedicalRecord with items
+    // ✅ Create medical record
     const medicalRecord = await prisma.medicalRecord.create({
       data: {
         patientId: patient.id,
@@ -57,9 +170,10 @@ export const createMedicalRecord = async (req, res) => {
         discount: Number(discount),
         finalFee,
         notes: notes || null,
-        createdAt: new Date(),
 
-        // Items with relations
+        // 🔥 THIS FIXES THE ERROR
+        userId: userId,
+
         items: {
           create: preparedItems,
         },
@@ -78,18 +192,7 @@ export const createMedicalRecord = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      data: {
-        id: medicalRecord.id,
-        patientId: medicalRecord.patientId,
-        recordDate: medicalRecord.recordDate,
-        totalFee: medicalRecord.totalFee,
-        discount: medicalRecord.discount,
-        finalFee: medicalRecord.finalFee,
-        notes: medicalRecord.notes,
-        createdAt: medicalRecord.createdAt,
-        patient: medicalRecord.patient,
-        items: medicalRecord.items,
-      },
+      data: medicalRecord,
     });
   } catch (error) {
     console.error("createMedicalRecord error:", error);

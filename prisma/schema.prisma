@@ -240,8 +240,9 @@ model MedicalRecord {
 
   createdAt DateTime @default(now())
 
-  user         User?       @relation(fields: [userId], references: [id])
-  userId       Int?
+  // ✅ THIS MUST MATCH DB
+  userId       Int
+  user         User        @relation(fields: [userId], references: [id])
   department   Department? @relation(fields: [departmentId], references: [id])
   departmentId Int?
   procedure    Procedure?  @relation(fields: [procedureId], references: [id])
