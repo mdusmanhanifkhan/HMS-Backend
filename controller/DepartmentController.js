@@ -117,6 +117,46 @@ export const getDepartments = async (req, res) => {
   }
 };
 
+// Get all departments (active + inactive, with optional search)
+export const getAllDepartments = async (req, res) => {
+  try {
+    const { search } = req.query;
+
+    const where = {
+      ...(search && {
+        OR: [
+          { name: { contains: search, mode: "insensitive" } },
+          { shortCode: { contains: search, mode: "insensitive" } },
+          { location: { contains: search, mode: "insensitive" } },
+        ],
+      }),
+    };
+
+    const departments = await prisma.department.findMany({
+      where,
+      orderBy: { id: "desc" },
+    });
+
+    if (!departments.length) {
+      return sendError(
+        res,
+        200,
+        search
+          ? `No departments match "${search}"`
+          : "No departments found"
+      );
+    }
+
+    return res.status(200).json({
+      status: 200,
+      message: "Departments retrieved successfully",
+      data: departments,
+    });
+  } catch (error) {
+    return sendError(res, 500, ERROR_MESSAGES.INTERNAL);
+  }
+};
+
 
 // Get single department
 export const getSingleDepartment = async (req, res) => {

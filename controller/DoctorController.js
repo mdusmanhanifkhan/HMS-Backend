@@ -175,6 +175,50 @@ export const getDoctors = async (req, res) => {
   try {
     const { search } = req.query;
 
+    // Only active doctors
+    const where = {
+      status: true, // ✅ Only active
+      ...(search && {
+        OR: [
+          { name: { contains: search, mode: "insensitive" } },
+          { specialization: { contains: search, mode: "insensitive" } },
+        ],
+      }),
+    };
+
+    const doctors = await prisma.doctor.findMany({
+      where,
+      include: {
+        departmentLinks: { include: { department: true } },
+        feeLinks: { include: { feePolicy: true, procedure: true } },
+      },
+      orderBy: { id: "desc" },
+    });
+
+    return res.status(200).json({
+      status: 200,
+      message: doctors.length
+        ? "Doctors retrieved successfully"
+        : search
+        ? `No doctors match "${search}"`
+        : "No doctors found",
+      count: doctors.length,
+      data: doctors,
+    });
+  } catch (error) {
+    return sendError(
+      res,
+      500,
+      "Failed to retrieve doctors due to a server error."
+    );
+  }
+};
+
+
+export const getAllDoctors = async (req, res) => {
+  try {
+    const { search } = req.query;
+
     const where = search
       ? {
           OR: [
@@ -248,6 +292,7 @@ export const updateDoctor = async (req, res) => {
     if (!doctor) return sendError(res, 404, "Doctor not found");
 
     const {
+      status,
       name,
       gender,
       age,
@@ -277,6 +322,7 @@ export const updateDoctor = async (req, res) => {
     const updatedDoctor = await prisma.doctor.update({
       where: { id },
       data: {
+        status,
         name,
         gender,
         age,
