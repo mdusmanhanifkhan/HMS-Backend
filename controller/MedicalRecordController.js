@@ -6,6 +6,8 @@ export const createMedicalRecord = async (req, res) => {
     // ✅ Get user from JWT
     const userId = req.user?.id;
 
+    console.log(userId);
+
     if (!userId) {
       return res.status(401).json({
         success: false,
@@ -67,10 +69,7 @@ export const createMedicalRecord = async (req, res) => {
         discount: Number(discount),
         finalFee,
         notes: notes || null,
-
-        // 🔥 THIS FIXES THE ERROR
         userId: userId,
-
         items: {
           create: preparedItems,
         },
@@ -107,29 +106,26 @@ export const getMedicalRecordsByPatient = async (req, res) => {
     const patient = await prisma.patient.findUnique({
       where: { patientId: Number(patientId) },
       include: {
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
         MedicalRecord: {
           orderBy: { recordDate: "desc" },
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-              },
-            },
+          take: 10,
+          select: {
+            totalFee: true,
+            discount: true,
+            finalFee: true,
+            notes: true,
+            createdAt: true,
+           
+            user: { select: { id: true, name: true } }, 
             items: {
-              include: {
-                department: true,
-                doctor: true,
-                procedure: true,
+              select: {
+                fee: true,
+                finalFee: true,
+                discount: true,
+                notes: true,
+                department: { select: { id: true, name: true } },
+                doctor: { select: { id: true, name: true } },
+                procedure: { select: { id: true, name: true } },
               },
             },
           },
@@ -191,7 +187,7 @@ export const getMedicalRecords = async (req, res) => {
           orderBy: { recordDate: "desc" },
         },
       },
-      orderBy: { name: "asc" },
+      orderBy: { patientId: "desc" },
     });
 
     // Add totalVisits count
