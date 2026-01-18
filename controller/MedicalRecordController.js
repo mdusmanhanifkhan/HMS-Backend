@@ -3,7 +3,7 @@ import prisma from "../DB/db.config.js";
 
 export const createMedicalRecord = async (req, res) => {
   try {
-    // ✅ Get user from JWT
+
     const userId = req.user?.id;
 
     console.log(userId);
@@ -99,6 +99,120 @@ export const createMedicalRecord = async (req, res) => {
   }
 };
 
+export const createMedicalRecordPatients = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized: user not found",
+      });
+    }
+
+    const {
+      patientId,
+      recordDate,        // ✅ NEW
+      discount = 0,
+      notes,
+      items,
+    } = req.body;
+
+    // ✅ Validate items
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "At least one medical record item is required",
+      });
+    }
+
+    // ✅ Validate recordDate (optional)
+    let finalRecordDate = new Date();
+    if (recordDate) {
+      const parsedDate = new Date(recordDate);
+      if (isNaN(parsedDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid recordDate format",
+        });
+      }
+      finalRecordDate = parsedDate;
+    }
+
+    // ✅ Find patient
+    const patient = await prisma.patient.findUnique({
+      where: { patientId: Number(patientId) },
+    });
+
+    if (!patient) {
+      return res.status(404).json({
+        success: false,
+        message: `Patient with id ${patientId} not found`,
+      });
+    }
+
+    // ✅ Prepare items
+    const preparedItems = items.map((item) => {
+      const fee = Number(item.fee || 0);
+      const itemDiscount = Number(item.discount || 0);
+
+      return {
+        fee,
+        discount: itemDiscount,
+        finalFee: fee - itemDiscount,
+        notes: item.notes || null,
+        department: { connect: { id: Number(item.departmentId) } },
+        procedure: { connect: { id: Number(item.procedureId) } },
+        doctor: item.doctorId
+          ? { connect: { id: Number(item.doctorId) } }
+          : undefined,
+      };
+    });
+
+    // ✅ Calculate totals
+    const totalFee = preparedItems.reduce((sum, i) => sum + i.fee, 0);
+    const finalFee =
+      preparedItems.reduce((sum, i) => sum + i.finalFee, 0) - Number(discount);
+
+    // ✅ Create medical record
+    const medicalRecord = await prisma.medicalRecord.create({
+      data: {
+        patientId: patient.id,
+        recordDate: finalRecordDate,   // ✅ BACKDATED OR TODAY
+        totalFee,
+        discount: Number(discount),
+        finalFee,
+        notes: notes || null,
+        userId,
+        items: {
+          create: preparedItems,
+        },
+      },
+      include: {
+        patient: true,
+        items: {
+          include: {
+            department: true,
+            doctor: true,
+            procedure: true,
+          },
+        },
+      },
+    });
+
+    return res.status(201).json({
+      success: true,
+      data: medicalRecord,
+    });
+  } catch (error) {
+    console.error("createMedicalRecordPatients error:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Server error",
+    });
+  }
+};
+
 export const getMedicalRecordsByPatient = async (req, res) => {
   try {
     const { patientId } = req.params;
@@ -158,11 +272,27 @@ export const getMedicalRecordsByPatient = async (req, res) => {
 
 export const getMedicalRecords = async (req, res) => {
   try {
-    // Fetch all patients who have at least 1 medical record
+    // Extract query params
+    const { page = 1, limit = 10, search } = req.query;
+
+    const pageNum = parseInt(page, 10);
+    const pageSize = parseInt(limit, 10);
+    const skip = (pageNum - 1) * pageSize;
+
+    // Build filter
+    const where = {
+      MedicalRecord: { some: {} }, // only patients with visits
+      ...(search && {
+        patientId: Number(search),
+      }),
+    };
+
+    // Fetch total count for pagination
+    const totalPatients = await prisma.patient.count({ where });
+
+    // Fetch paginated data
     const patientsWithVisits = await prisma.patient.findMany({
-      where: {
-        MedicalRecord: { some: {} }, // only patients with visits
-      },
+      where,
       select: {
         id: true,
         patientId: true,
@@ -188,6 +318,8 @@ export const getMedicalRecords = async (req, res) => {
         },
       },
       orderBy: { patientId: "desc" },
+      skip,
+      take: pageSize,
     });
 
     // Add totalVisits count
@@ -198,6 +330,10 @@ export const getMedicalRecords = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      page: pageNum,
+      limit: pageSize,
+      total: totalPatients,
+      totalPages: Math.ceil(totalPatients / pageSize),
       data,
     });
   } catch (error) {
@@ -208,6 +344,7 @@ export const getMedicalRecords = async (req, res) => {
     });
   }
 };
+
 
 export const exportMedicalRecordsExcel = async (req, res) => {
   try {

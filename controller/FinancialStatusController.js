@@ -46,36 +46,39 @@ async function getDepartmentRevenueToday() {
   }).sort((a, b) => b.revenue - a.revenue);
 }
 
-// Reception/user-wise revenue
 async function getReceptionRevenueToday() {
   const { start, end } = getTodayRange();
 
-  // Fetch all medical records for today, including patient info
+  // Fetch only today's medical records
   const records = await prisma.medicalRecord.findMany({
-    where: { recordDate: { gte: start, lte: end }, patient: { createdByUserId: { not: null } } },
+    where: { recordDate: { gte: start, lte: end } },
     select: {
       finalFee: true,
-      patient: { select: { createdByUserId: true } },
+      userId: true, // ✅ user who created the record
     },
   });
 
-  // Sum per user
+  // Sum revenue per user
   const revenueMap = {};
   records.forEach(rec => {
-    const userId = rec.patient.createdByUserId;
+    const userId = rec.userId;
     if (!revenueMap[userId]) revenueMap[userId] = 0;
     revenueMap[userId] += Number(rec.finalFee);
   });
 
   // Fetch user names in one query
   const userIds = Object.keys(revenueMap).map(Number);
-  const users = await prisma.user.findMany({ where: { id: { in: userIds } } });
+  const users = await prisma.user.findMany({
+    where: { id: { in: userIds } },
+    select: { id: true, name: true },
+  });
 
   return userIds.map(id => {
     const user = users.find(u => u.id === id);
     return { user: user ? user.name : 'Unknown', revenue: revenueMap[id] };
   });
 }
+
 
 // Express handler
 export async function getFinancialReportTodayHandler(req, res) {
