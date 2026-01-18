@@ -229,6 +229,7 @@ export const getMedicalRecordsByPatient = async (req, res) => {
             finalFee: true,
             notes: true,
             createdAt: true,
+            recordDate: true,
            
             user: { select: { id: true, name: true } }, 
             items: {
