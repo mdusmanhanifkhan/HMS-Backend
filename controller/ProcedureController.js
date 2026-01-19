@@ -234,7 +234,6 @@ export const getActiveProcedures = async (req, res) => {
   }
 };
 
-// Get Single Procedure
 export const getProcedureById = async (req, res) => {
   try {
     const id = Number(req.params.id);
