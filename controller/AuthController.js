@@ -37,7 +37,7 @@ export const loginUser = async (req, res) => {
     const token = jwt.sign(
       { id: user.id, role: user.role.name },
       "D9w!uZ4f#Jr2pQ8Lk7@Yt3$BnV6sM0^cR1eF&hW9xPzQ5!mT2uA",
-      { expiresIn: "1d" }
+      { expiresIn: "1d" },
     );
 
     res.json({
@@ -51,9 +51,8 @@ export const loginUser = async (req, res) => {
         role: user.role.name,
       },
     });
-
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return sendError(res, 500, "Server error during login");
   }
 };
@@ -79,7 +78,6 @@ export const getMe = async (req, res) => {
         role: user.role,
       },
     });
-
   } catch (error) {
     return sendError(res, 500, "Server error");
   }
@@ -98,8 +96,12 @@ export const createUser = async (req, res) => {
 
     const { name, email, password, roleId } = req.body;
 
-    if (!name || !email || !password )
-      return sendError(res, 400, "All fields (name, email, password, roleId) are required");
+    if (!name || !email || !password)
+      return sendError(
+        res,
+        400,
+        "All fields (name, email, password, roleId) are required",
+      );
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return sendError(res, 400, "Email already exists");
@@ -116,7 +118,6 @@ export const createUser = async (req, res) => {
       message: "User created successfully",
       user: newUser,
     });
-
   } catch (error) {
     return sendError(res, 500, "Server error while creating user");
   }
@@ -127,8 +128,8 @@ export const createUser = async (req, res) => {
  */
 export const getAllUsers = async (req, res) => {
   try {
-    if (req.user.role.name !== "SuperAdmin")
-      return sendError(res, 403, "Only SuperAdmin can view all users");
+    // if (req.user.role.name !== "SuperAdmin")
+    //   return sendError(res, 403, "Only SuperAdmin can view all users");
 
     const users = await prisma.user.findMany({
       include: { role: true },
@@ -136,7 +137,6 @@ export const getAllUsers = async (req, res) => {
     });
 
     res.json({ success: true, users });
-
   } catch (error) {
     return sendError(res, 500, "Server error fetching users");
   }
@@ -159,7 +159,6 @@ export const getSingleUser = async (req, res) => {
     if (!user) return sendError(res, 404, "User not found");
 
     res.json({ success: true, user });
-
   } catch (error) {
     return sendError(res, 500, "Server error");
   }
@@ -187,7 +186,6 @@ export const updateUser = async (req, res) => {
       message: "User updated successfully",
       user: updated,
     });
-
   } catch (error) {
     return sendError(res, 500, "Server error updating user");
   }
@@ -215,7 +213,6 @@ export const updateUserRole = async (req, res) => {
       message: "User role updated successfully",
       user: updated,
     });
-
   } catch (error) {
     return sendError(res, 500, "Server error updating role");
   }
@@ -226,12 +223,15 @@ export const updateUserRole = async (req, res) => {
  */
 export const deleteUser = async (req, res) => {
   try {
-    if (req.user.role.name !== "SuperAdmin")
+    if (!req.user || req.user.role?.name !== "superadmin")
       return sendError(res, 403, "Only SuperAdmin can delete users");
 
     const id = Number(req.params.id);
 
-    await prisma.user.update({
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) return sendError(res, 404, "User not found");
+
+    const updatedUser = await prisma.user.update({
       where: { id },
       data: { status: false },
     });
@@ -239,9 +239,11 @@ export const deleteUser = async (req, res) => {
     res.json({
       success: true,
       message: "User disabled successfully",
+      data: updatedUser,
     });
-
   } catch (error) {
+    console.error("deleteUser error:", error);
     return sendError(res, 500, "Server error deleting user");
   }
 };
+
