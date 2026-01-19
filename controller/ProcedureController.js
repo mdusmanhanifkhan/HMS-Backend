@@ -1,4 +1,5 @@
 import prisma from "../DB/db.config.js";
+import { buildPaginationResponse, getPagination } from "../utils/pagination.js";
 
 // Constants
 const PROCEDURE_NAME_MAX = 100;
@@ -66,21 +67,17 @@ export const createProcedure = async (req, res) => {
   }
 };
 
-// Get All Procedures with optional search
 export const getProcedures = async (req, res) => {
   try {
     const { search, status } = req.query;
 
-    // --------------------------
-    // 🛑 Validate Query Params
-    // --------------------------
     if (status && !["true", "false", "all"].includes(status)) {
       return sendError(res, 400, "Invalid status value. Use true, false, or all.");
     }
 
-    // --------------------------
-    // 🔍 Build Prisma Filter
-    // --------------------------
+    const { page, limit, skip } = getPagination(req.query);
+
+   
     const where = {};
 
     if (status !== undefined && status !== "all") {
@@ -95,46 +92,36 @@ export const getProcedures = async (req, res) => {
       ];
     }
 
-    // --------------------------
-    // 📌 Fetch Data from Prisma
-    // --------------------------
-    const procedures = await prisma.procedure.findMany({
-      where,
-      include: { department: true },
-      orderBy: { createdAt: "desc" },
-    });
+    const [procedures, total] = await Promise.all([
+      prisma.procedure.findMany({
+        where,
+        include: { department: true },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.procedure.count({ where }),
+    ]);
 
-    // --------------------------
-    // 📌 Always Return 200 (Even Empty)
-    // --------------------------
     return res.status(200).json({
       success: true,
       message: "Procedures retrieved successfully",
-      count: procedures.length,
       data: procedures,
+      pagination: buildPaginationResponse(
+        total,
+        page,
+        limit,
+        procedures.length
+      ),
     });
 
   } catch (error) {
-    // --------------------------
-    // ❗ Prisma Error Handling
-    // --------------------------
     console.error("Error fetching procedures:", error);
-
-    if (error.code === "P2023") {
-      // Prisma invalid ID / invalid filter
-      return sendError(res, 400, "Invalid query parameters.");
-    }
-
-    if (error.code === "P2002") {
-      return sendError(res, 409, "Database constraint violation.");
-    }
-
-    // --------------------------
-    // 🛑 Fallback (Unknown Error)
-    // --------------------------
     return sendError(res, 500, "An unexpected error occurred while fetching procedures.");
   }
 };
+
+
 export const getActiveProcedures = async (req, res) => {
   try {
     const { search } = req.query;
@@ -178,7 +165,6 @@ export const getActiveProcedures = async (req, res) => {
     return sendError(res, 500, "An unexpected error occurred while fetching procedures.");
   }
 };
-
 
 // Get Single Procedure
 export const getProcedureById = async (req, res) => {

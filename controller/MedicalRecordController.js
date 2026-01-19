@@ -1,5 +1,6 @@
 import XLSX from "xlsx";
 import prisma from "../DB/db.config.js";
+import { buildPaginationResponse, getPagination } from "../utils/pagination.js";
 
 export const createMedicalRecord = async (req, res) => {
   try {
@@ -273,25 +274,19 @@ export const getMedicalRecordsByPatient = async (req, res) => {
 
 export const getMedicalRecords = async (req, res) => {
   try {
-    // Extract query params
-    const { page = 1, limit = 10, search } = req.query;
+    const { search, name } = req.query;
 
-    const pageNum = parseInt(page, 10);
-    const pageSize = parseInt(limit, 10);
-    const skip = (pageNum - 1) * pageSize;
+    const { page, limit, skip } = getPagination(req.query);
 
-    // Build filter
     const where = {
-      MedicalRecord: { some: {} }, // only patients with visits
-      ...(search && {
-        patientId: Number(search),
-      }),
+      MedicalRecord: { some: {} }, 
     };
 
-    // Fetch total count for pagination
+    if (search) where.patientId = Number(search);
+    if (name) where.name = { contains: name, mode: 'insensitive' };
+
     const totalPatients = await prisma.patient.count({ where });
 
-    // Fetch paginated data
     const patientsWithVisits = await prisma.patient.findMany({
       where,
       select: {
@@ -301,11 +296,8 @@ export const getMedicalRecords = async (req, res) => {
         guardianName: true,
         gender: true,
         age: true,
-        maritalStatus: true,
-        bloodGroup: true,
         cnicNumber: true,
         phoneNumber: true,
-        address: true,
         MedicalRecord: {
           select: {
             id: true,
@@ -315,36 +307,32 @@ export const getMedicalRecords = async (req, res) => {
             finalFee: true,
             notes: true,
           },
-          orderBy: { recordDate: "desc" },
+          orderBy: { recordDate: 'desc' },
         },
       },
-      orderBy: { patientId: "desc" },
+      orderBy: { patientId: 'desc' },
       skip,
-      take: pageSize,
+      take: limit,
     });
 
-    // Add totalVisits count
     const data = patientsWithVisits.map((p) => ({
       ...p,
       totalVisits: p.MedicalRecord.length,
     }));
 
-    return res.status(200).json({
+    const pagination = buildPaginationResponse(totalPatients, page, limit, data.length);
+
+    res.status(200).json({
       success: true,
-      page: pageNum,
-      limit: pageSize,
-      total: totalPatients,
-      totalPages: Math.ceil(totalPatients / pageSize),
+      ...pagination,
       data,
     });
-  } catch (error) {
-    console.error("getMedicalRecords error:", error);
-    return res.status(500).json({
-      success: false,
-      message: error.message || "Server error",
-    });
+  } catch (err) {
+    console.error('getMedicalRecords error:', err);
+    res.status(500).json({ success: false, message: err.message || 'Server error' });
   }
 };
+
 
 
 export const exportMedicalRecordsExcel = async (req, res) => {
