@@ -222,7 +222,7 @@ export const getMedicalRecordsByPatient = async (req, res) => {
       include: {
         MedicalRecord: {
           orderBy: { recordDate: "desc" },
-          take: 10,
+         
           select: {
             totalFee: true,
             discount: true,
