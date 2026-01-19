@@ -75,12 +75,12 @@ async function main() {
 
     await ensureUser("superadmin@system.com", "Super Admin", "superadmin@01", adminRole.id);
     await ensureUser("developer@system.com", "Developer", "developer@khan", patientRole.id);
-    await ensureUser("reception01@system.com", "Reception One", "reception@01", patientRole.id);
-    await ensureUser("reception02@system.com", "Reception Two", "reception@02", patientRole.id);
-    await ensureUser("reception03@system.com", "Reception Three", "reception@03", patientRole.id);
-    await ensureUser("reception04@system.com", "Reception Four", "reception@04", patientRole.id);
-    await ensureUser("reception05@system.com", "Reception Five", "reception@05", patientRole.id);
-    await ensureUser("reception06@system.com", "Reception Six", "reception@06", patientRole.id);
+    await ensureUser("sharjeel.baig@system.com", "Sharjeel Baig", "sharjeel.baig@system", patientRole.id);
+    await ensureUser("faisal.ghani@system.com", "Faisal Ghani", "faisalghani@system", patientRole.id);
+    await ensureUser("miraj.arif@system.com", "Miraj Arif", "miraj@system", patientRole.id);
+    await ensureUser("sidra@system.com", "Sidra", "sidra@system", patientRole.id);
+    await ensureUser("hiraqaiser@system.com", "Sidra Qaiser", "sidraqaiser@system", patientRole.id);
+    await ensureUser("aniba@system.com", "Aniba", "aniba@system", patientRole.id);
 
     console.log("Seeding completed!");
   } catch (error) {

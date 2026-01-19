@@ -333,8 +333,6 @@ export const getMedicalRecords = async (req, res) => {
   }
 };
 
-
-
 export const exportMedicalRecordsExcel = async (req, res) => {
   try {
     const { from, to } = req.query;
