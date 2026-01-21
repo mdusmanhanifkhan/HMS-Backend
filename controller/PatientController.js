@@ -125,6 +125,73 @@ export const createPatient = async (req, res) => {
   }
 };
 
+export const createPatientBackDate = async (req, res) => {
+  try {
+    const {
+      name,
+      guardianName,
+      gender,
+      age,
+      maritalStatus,
+      bloodGroup,
+      phoneNumber,
+      cnicNumber,
+      address,
+      createdByUserId,
+      createdAt
+    } = req.body;
+
+    const { errors, missingFields } = validatePatientInput(req.body);
+    if (missingFields.length > 0) {
+      return sendError(
+        res,
+        400,
+        `Validation failed: ${missingFields.join(", ")}`,
+        errors
+      );
+    }
+
+    const patient = await prisma.$transaction(
+      async (tx) => {
+        const patientId = await generateSequentialPatientId(tx);
+
+        return tx.patient.create({
+          data: {
+            patientId,
+            name,
+            guardianName,
+            gender,
+            age: Number(age),
+            maritalStatus,
+            bloodGroup,
+            phoneNumber,
+            cnicNumber,
+            address,
+            createdByUserId,
+            createdAt
+          },
+        });
+      },
+      {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      }
+    );
+
+    return res.status(201).json({
+      status: 201,
+      message: "Patient created successfully",
+      data: patient,
+    });
+  } catch (error) {
+    // Graceful duplicate handling (last line of defense)
+    if (error.code === "P2002") {
+      return sendError(res, 409, "Patient ID conflict, please retry");
+    }
+
+    console.error(error);
+    return sendError(res, 500, "Internal server error");
+  }
+};
 
 // ✅ Get all patients (with welfare info)
 export const getPatients = async (req, res) => {
