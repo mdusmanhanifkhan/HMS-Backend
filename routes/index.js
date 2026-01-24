@@ -26,7 +26,7 @@ router.use("/api", authRoutes);
 router.use("/api", roleRoutes);
 
 // -----------------------------
-// 🏥 Protected Routes (require login)
+// 🏥 Protected Routes (require login) & OPD SYSTEM
 // -----------------------------
 router.use("/api", protect, departmentRoutes);
 router.use("/api", protect, procedureRoutes);
@@ -37,6 +37,11 @@ router.use("/api", protect, feeRoutes);
 router.use("/api", protect, medicalRecordsRoutes);
 router.use("/api", protect, labFeesRoutes);
 router.use("/api", protect, financialRoutes);
+
+// -----------------------------
+// 🏥 Pharmacy Routes & SYSTEM (require login)
+// -----------------------------
+
 router.use("/api", protect, companyRoutes);
 
 export default router;
