@@ -5,7 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = "postgresql://postgres:.adgjmbcz1@3.15.5.142:5432/hikarimed_db?schema=public"
+  url      = env("DATABASE_URL")
 }
 
 /**
@@ -332,4 +332,22 @@ model LabFee {
   @@unique([procedureId, departmentId])
   @@index([departmentId])
   @@index([procedureId])
+}
+
+
+model Company {
+  id                    Int     @id @default(autoincrement())
+  name                  String
+  code                  String?
+  contactPerson         String?
+  phone                 String?
+  email                 String?
+  drugRegistrationNo    String?
+  manufacturingLicenseNo String?
+  ntnNumber             String?
+  gstNumber             String?
+  isActive              Boolean @default(true)
+  remarks               String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }
