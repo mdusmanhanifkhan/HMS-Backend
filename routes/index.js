@@ -26,7 +26,7 @@ router.use("/api", authRoutes);
 router.use("/api", roleRoutes);
 
 // -----------------------------
-// 🏥 Protected Routes (require login) & OPD SYSTEM
+// 🏥 Protected Routes & OPD SYSTEM
 // -----------------------------
 router.use("/api", protect, departmentRoutes);
 router.use("/api", protect, procedureRoutes);
