@@ -334,20 +334,62 @@ model LabFee {
   @@index([procedureId])
 }
 
-
 model Company {
-  id                    Int     @id @default(autoincrement())
-  name                  String
-  code                  String?
-  contactPerson         String?
-  phone                 String?
-  email                 String?
-  drugRegistrationNo    String?
+  id                     Int           @id @default(autoincrement())
+  name                   String
+  code                   String?
+  contactPerson          String?
+  phone                  String?
+  email                  String?
+  drugRegistrationNo     String?
   manufacturingLicenseNo String?
-  ntnNumber             String?
-  gstNumber             String?
-  isActive              Boolean @default(true)
-  remarks               String?
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  ntnNumber              String?
+  gstNumber              String?
+  isActive               Boolean       @default(true)
+  remarks                String?
+  distributors           Distributor[] @relation("DistributorCompanies")
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+}
+
+model Distributor {
+  id            Int     @id @default(autoincrement())
+  name          String  @db.VarChar(150)
+  contactPerson String? @db.VarChar(100)
+  phone         String? @db.VarChar(20)
+  mobile        String? @db.VarChar(20)
+  email         String? @db.VarChar(100)
+  website       String? @db.VarChar(100)
+  status        Boolean @default(true)
+
+  // Address Info
+  addressLine1 String? @db.VarChar(200)
+  addressLine2 String? @db.VarChar(200)
+  city         String? @db.VarChar(100)
+  state        String? @db.VarChar(100)
+  country      String? @default("Pakistan") @db.VarChar(100)
+  postalCode   String? @db.VarChar(20)
+
+  // Business / Legal Info
+  ntnNumber      String? @db.VarChar(50)
+  gstNumber      String? @db.VarChar(50)
+  drugLicenseNo  String? @db.VarChar(50)
+  registrationNo String? @db.VarChar(50)
+
+  // Financial Info
+  openingBalance Float?  @default(0)
+  balanceType    String? @db.VarChar(10)
+  creditLimit    Float?
+  paymentTerms   String? @db.VarChar(50)
+  bankName       String? @db.VarChar(100)
+  bankAccountNo  String? @db.VarChar(50)
+  iban           String? @db.VarChar(50)
+
+  remarks String? @db.VarChar(500)
+
+  // Many-to-Many relation with Company
+  companies Company[] @relation("DistributorCompanies")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
