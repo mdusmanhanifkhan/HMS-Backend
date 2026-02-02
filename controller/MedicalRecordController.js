@@ -4,7 +4,6 @@ import { buildPaginationResponse, getPagination } from "../utils/pagination.js";
 
 export const createMedicalRecord = async (req, res) => {
   try {
-
     const userId = req.user?.id;
 
     console.log(userId);
@@ -113,7 +112,7 @@ export const createMedicalRecordPatients = async (req, res) => {
 
     const {
       patientId,
-      recordDate,        // ✅ NEW
+      recordDate, // ✅ NEW
       discount = 0,
       notes,
       items,
@@ -179,7 +178,7 @@ export const createMedicalRecordPatients = async (req, res) => {
     const medicalRecord = await prisma.medicalRecord.create({
       data: {
         patientId: patient.id,
-        recordDate: finalRecordDate,   // ✅ BACKDATED OR TODAY
+        recordDate: finalRecordDate, // ✅ BACKDATED OR TODAY
         totalFee,
         discount: Number(discount),
         finalFee,
@@ -223,7 +222,7 @@ export const getMedicalRecordsByPatient = async (req, res) => {
       include: {
         MedicalRecord: {
           orderBy: { recordDate: "desc" },
-         
+
           select: {
             totalFee: true,
             discount: true,
@@ -231,8 +230,8 @@ export const getMedicalRecordsByPatient = async (req, res) => {
             notes: true,
             createdAt: true,
             recordDate: true,
-           
-            user: { select: { id: true, name: true } }, 
+
+            user: { select: { id: true, name: true } },
             items: {
               select: {
                 fee: true,
@@ -279,11 +278,11 @@ export const getMedicalRecords = async (req, res) => {
     const { page, limit, skip } = getPagination(req.query);
 
     const where = {
-      MedicalRecord: { some: {} }, 
+      MedicalRecord: { some: {} },
     };
 
     if (search) where.patientId = Number(search);
-    if (name) where.name = { contains: name, mode: 'insensitive' };
+    if (name) where.name = { contains: name, mode: "insensitive" };
 
     const totalPatients = await prisma.patient.count({ where });
 
@@ -307,10 +306,10 @@ export const getMedicalRecords = async (req, res) => {
             finalFee: true,
             notes: true,
           },
-          orderBy: { recordDate: 'desc' },
+          orderBy: { recordDate: "desc" },
         },
       },
-      orderBy: { patientId: 'desc' },
+      orderBy: { patientId: "desc" },
       skip,
       take: limit,
     });
@@ -320,7 +319,12 @@ export const getMedicalRecords = async (req, res) => {
       totalVisits: p.MedicalRecord.length,
     }));
 
-    const pagination = buildPaginationResponse(totalPatients, page, limit, data.length);
+    const pagination = buildPaginationResponse(
+      totalPatients,
+      page,
+      limit,
+      data.length,
+    );
 
     res.status(200).json({
       success: true,
@@ -328,8 +332,10 @@ export const getMedicalRecords = async (req, res) => {
       data,
     });
   } catch (err) {
-    console.error('getMedicalRecords error:', err);
-    res.status(500).json({ success: false, message: err.message || 'Server error' });
+    console.error("getMedicalRecords error:", err);
+    res
+      .status(500)
+      .json({ success: false, message: err.message || "Server error" });
   }
 };
 
@@ -365,6 +371,8 @@ export const exportMedicalRecordsExcel = async (req, res) => {
     // ✅ Flatten data for Excel
     const rows = [];
 
+    console.log(records);
+
     records.forEach((record) => {
       // If record has no items, still export one row
       if (record.items.length === 0) {
@@ -372,6 +380,8 @@ export const exportMedicalRecordsExcel = async (req, res) => {
           Date: record.recordDate.toISOString().split("T")[0],
           PatientID: record.patient.patientId,
           PatientName: record.patient.name,
+          Gender: record.patient.gender || "",
+          Age: record.patient.age || "",
           Department: record.department?.name || "",
           Doctor: record.doctor?.name || "",
           Procedure: record.procedure?.name || "",
@@ -388,6 +398,8 @@ export const exportMedicalRecordsExcel = async (req, res) => {
           Date: record.recordDate.toISOString().split("T")[0],
           PatientID: record.patient.patientId,
           PatientName: record.patient.name,
+          Gender: record.patient.gender || "",
+          Age: record.patient.age || "",
           Department: item.department?.name || "",
           Doctor: item.doctor?.name || "",
           Procedure: item.procedure?.name || "",
@@ -407,11 +419,11 @@ export const exportMedicalRecordsExcel = async (req, res) => {
     // ✅ Response headers
     res.setHeader(
       "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     );
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename=medical-records.xlsx`
+      `attachment; filename=medical-records.xlsx`,
     );
 
     const buffer = XLSX.write(workbook, {

@@ -13,6 +13,7 @@ import medicalRecordsRoutes from "./medicalRecordRoutes.js";
 import labFeesRoutes from "./labFeeRoutes.js";
 import financialRoutes from "./financialStatusRoutes.js";
 import companyRoutes from "./pharmacy/companyRoutes.js";
+import distributorRoutes from "./pharmacy/distributorRoutes.js";
 
 // ✅ Import middleware
 import { protect } from "../middleware/authMiddleware.js";
@@ -43,5 +44,6 @@ router.use("/api", protect, financialRoutes);
 // -----------------------------
 
 router.use("/api", protect, companyRoutes);
+router.use("/api", protect, distributorRoutes);
 
 export default router;

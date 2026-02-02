@@ -15,6 +15,7 @@ const allowedOrigins = [
   "https://www.hikarimed.online",
   "https://hikarimed.vercel.app",
   "http://localhost:5173",
+  "http://192.168.0.128:5173"
 ];
 
 
