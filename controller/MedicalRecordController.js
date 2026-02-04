@@ -371,7 +371,7 @@ export const exportMedicalRecordsExcel = async (req, res) => {
     // ✅ Flatten data for Excel
     const rows = [];
 
-    console.log(records);
+    console.log(records , "records");
 
     records.forEach((record) => {
       // If record has no items, still export one row
@@ -404,8 +404,8 @@ export const exportMedicalRecordsExcel = async (req, res) => {
           Doctor: item.doctor?.name || "",
           Procedure: item.procedure?.name || "",
           Fee: Number(item.fee),
-          Discount: Number(item.discount),
-          FinalFee: Number(item.finalFee),
+          Discount: Number(record.discount),
+          FinalFee: Number(record.finalFee),
           CreatedBy: record.user?.name || "",
         });
       });
